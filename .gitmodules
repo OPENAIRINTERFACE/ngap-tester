@@ -1,0 +1,4 @@
+[submodule "third-party/gnbsim"]
+	path = third-party/gnbsim
+	url = https://github.com/OPENAIRINTERFACE/gnbsim.git
+	branch = ngap-tester
