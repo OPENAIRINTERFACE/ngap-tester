@@ -144,6 +144,11 @@ def synchronize(args):
         if branch == '':
             continue
         print('Synchronizing ' + sm_path + ' with branch/commit ' + str(branch))
+        if not os.listdir('./' + sm_path):
+            cmd = 'git submodule init'
+            subprocess.check_call(cmd, shell=True, universal_newlines=True)  # noqa: S602
+            cmd = 'git submodule update'
+            subprocess.check_call(cmd, shell=True, universal_newlines=True)  # noqa: S602
         prefix = 'cd ' + sm_path + ' && '
         cmd = prefix +  'git clean -x -d -ff'
         subprocess.check_call(cmd, shell=True, universal_newlines=True)  # noqa: S602
