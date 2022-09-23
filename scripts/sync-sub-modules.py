@@ -20,6 +20,8 @@ import subprocess  # noqa: S404
 import sys
 
 DEFAULT_GNBSIM_BRANCH='ngap-tester'
+DEFAULT_NAS_BRANCH='ngap-tester'
+DEFAULT_NGAP_BRANCH='ngap-tester'
 
 def main() -> None:
     """Provide command-line options to check/synchronize git sub-modules"""
@@ -72,6 +74,20 @@ def _parse_args() -> argparse.Namespace:
         '--gnbsim',
         action='store',
         default=DEFAULT_GNBSIM_BRANCH,
+        help='Specify the gnbsim sub-module branch / commit to synchronize with',
+    )
+
+    parser.add_argument(
+        '--nas',
+        action='store',
+        default=DEFAULT_NAS_BRANCH,
+        help='Specify the gnbsim sub-module branch / commit to synchronize with',
+    )
+
+    parser.add_argument(
+        '--ngap',
+        action='store',
+        default=DEFAULT_NGAP_BRANCH,
         help='Specify the gnbsim sub-module branch / commit to synchronize with',
     )
 
@@ -140,6 +156,10 @@ def synchronize(args):
     for sm_path in paths:
         branch = ''
         if sm_path == 'third-party/gnbsim':
+            branch = args.gnbsim
+        if sm_path == 'third-party/nas':
+            branch = args.nas
+        if sm_path == 'third-party/ngap':
             branch = args.gnbsim
         if branch == '':
             continue

@@ -2,3 +2,11 @@
 	path = third-party/gnbsim
 	url = https://github.com/OPENAIRINTERFACE/gnbsim.git
 	branch = ngap-tester
+[submodule "third-party/nas"]
+	path = third-party/nas
+	url = https://github.com/OPENAIRINTERFACE/nas.git
+	branch = ngap-tester
+[submodule "third-party/ngap"]
+	path = third-party/ngap
+	url = https://github.com/OPENAIRINTERFACE/ngap.git
+	branch = ngap-tester
