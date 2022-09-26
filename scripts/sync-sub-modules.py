@@ -160,7 +160,7 @@ def synchronize(args):
         if sm_path == 'third-party/nas':
             branch = args.nas
         if sm_path == 'third-party/ngap':
-            branch = args.gnbsim
+            branch = args.ngap
         if branch == '':
             continue
         print('Synchronizing ' + sm_path + ' with branch/commit ' + str(branch))
