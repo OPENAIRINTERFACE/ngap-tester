@@ -28,7 +28,7 @@ jobs:
     - name: golangci-lint-nas
       uses: golangci/golangci-lint-action@v3
       with:
-        version: v1.29
+        version: v1.49
         working-directory: third-party/nas
 
   golangci-ngap:
@@ -48,7 +48,7 @@ jobs:
     - name: golangci-lint-ngap
       uses: golangci/golangci-lint-action@v3
       with:
-        version: v1.29
+        version: v1.49
         working-directory: third-party/ngap
 
   golangci-gnbsim:
@@ -68,6 +68,6 @@ jobs:
     - name: golangci-lint-gnbsim
       uses: golangci/golangci-lint-action@v3
       with:
-        version: v1.29
+        version: v1.49
         working-directory: third-party/gnbsim
 
