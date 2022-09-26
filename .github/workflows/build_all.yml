@@ -26,3 +26,7 @@ jobs:
     - name: Synchronize with temptative branches in git sub-modules
       if: github.event_name == 'pull_request'
       run: ./scripts/sync-for-pull-request.sh
+    - name: Create the docker image
+      run: |
+        cd third-party/gnbsim
+        make docker-build
