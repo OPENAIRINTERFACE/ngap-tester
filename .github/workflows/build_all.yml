@@ -1,0 +1,22 @@
+name: build-all
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    types: [ opened, reopened, synchronize ]
+
+
+jobs:
+
+  build-x64:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.7' 
+    - run: ./scripts/sync-sub-modules.py --synchronize --force
