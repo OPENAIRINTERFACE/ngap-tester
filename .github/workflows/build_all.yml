@@ -13,10 +13,16 @@ on:
 jobs:
 
   build-x64:
+    if: github.repository_owner == 'openairinterface'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
       with:
         python-version: '3.7' 
-    - run: ./scripts/sync-sub-modules.py --synchronize --force
+    - name: Synchronize with merged branches in git sub-modules
+      if: github.event_name == 'push'
+      run: ./scripts/sync-sub-modules.py --synchronize --force
+    - name: Synchronize with temptative branches in git sub-modules
+      if: github.event_name == 'pull_request'
+      run: ./scripts/sync-for-pull-request.sh
