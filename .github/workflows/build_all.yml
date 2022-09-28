@@ -48,7 +48,9 @@ jobs:
     - name: Create the docker image
       run: |
         cd third-party/gnbsim
-        export DOCKER_REGISTRY=ghcr.io/
+        export DOCKER_REGISTRY=${{env.REGISTRY}}/
+        # Our org name is in upper-case, not accepted by docker
+        # export DOCKER_REPOSITORY=${{github.repository_owner}}/
         export DOCKER_REPOSITORY=openairinterface/
         if ${{ github.event_name == 'push' }}; then
           export DOCKER_TAG=ngap-tester
@@ -58,3 +60,17 @@ jobs:
         make docker-build
         # To see the size of the target image
         docker images
+
+    - name: Push the docker image to ghcr.io
+      if: success()
+      run: |
+        cd third-party/gnbsim
+        export DOCKER_REGISTRY=${{env.REGISTRY}}/
+        #export DOCKER_REPOSITORY=${{github.repository_owner}}/
+        export DOCKER_REPOSITORY=openairinterface/
+        if ${{ github.event_name == 'push' }}; then
+          export DOCKER_TAG=ngap-tester
+        elif ${{ github.event_name == 'pull_request' }}; then
+          export DOCKER_TAG=pr-${{github.event.pull_request.number}}
+        fi
+        make docker-push
