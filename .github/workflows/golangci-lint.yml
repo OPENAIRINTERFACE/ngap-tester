@@ -1,0 +1,73 @@
+name: golangci-lint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    types: [ opened, reopened, synchronize ]
+
+jobs:
+
+  golangci-nas:
+    if: github.repository_owner == 'openairinterface'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.7'
+    - name: Synchronize with merged branches in git sub-modules
+      if: github.event_name == 'push'
+      run: ./scripts/sync-sub-modules.py --synchronize --force
+    - name: Synchronize with temptative branches in git sub-modules
+      if: github.event_name == 'pull_request'
+      run: ./scripts/sync-for-pull-request.sh
+    - name: golangci-lint-nas
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: v1.49
+        working-directory: third-party/nas
+
+  golangci-ngap:
+    if: github.repository_owner == 'openairinterface'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.7'
+    - name: Synchronize with merged branches in git sub-modules
+      if: github.event_name == 'push'
+      run: ./scripts/sync-sub-modules.py --synchronize --force
+    - name: Synchronize with temptative branches in git sub-modules
+      if: github.event_name == 'pull_request'
+      run: ./scripts/sync-for-pull-request.sh
+    - name: golangci-lint-ngap
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: v1.49
+        working-directory: third-party/ngap
+
+  golangci-gnbsim:
+    if: github.repository_owner == 'openairinterface'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.7'
+    - name: Synchronize with merged branches in git sub-modules
+      if: github.event_name == 'push'
+      run: ./scripts/sync-sub-modules.py --synchronize --force
+    - name: Synchronize with temptative branches in git sub-modules
+      if: github.event_name == 'pull_request'
+      run: ./scripts/sync-for-pull-request.sh
+    - name: golangci-lint-gnbsim
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: v1.49
+        working-directory: third-party/gnbsim
+
