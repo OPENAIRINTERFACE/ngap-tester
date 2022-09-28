@@ -9,26 +9,49 @@ on:
       - main
     types: [ opened, reopened, synchronize ]
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: 5gc-gnbsim
 
 jobs:
 
   build-x64:
     if: github.repository_owner == 'openairinterface'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
     - uses: actions/setup-python@v4
       with:
         python-version: '3.7' 
     - name: Synchronize with merged branches in git sub-modules
       if: github.event_name == 'push'
-      run: ./scripts/sync-sub-modules.py --synchronize --force
+      run: |
+        ./scripts/sync-sub-modules.py --synchronize --force
+        export DOCKER_TAG=ngap-tester
     - name: Synchronize with temptative branches in git sub-modules
       if: github.event_name == 'pull_request'
-      run: ./scripts/sync-for-pull-request.sh
+      run: |
+        ./scripts/sync-for-pull-request.sh
+        export DOCKER_TAG=pr-${{github.event.pull_request.number}}
+
+    - name: Log in to the Container registry
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Create the docker image
       run: |
         cd third-party/gnbsim
+        export DOCKER_REGISTRY=ghcr.io/
+        export DOCKER_REPOSITORY=openairinterface/
         make docker-build
         # To see the size of the target image
         docker images
