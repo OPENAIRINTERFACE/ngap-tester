@@ -11,6 +11,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  IMAGE_REPOSITORY : openairinterface
   IMAGE_NAME: 5gc-gnbsim
 
 jobs:
@@ -49,9 +50,7 @@ jobs:
       run: |
         cd third-party/gnbsim
         export DOCKER_REGISTRY=${{env.REGISTRY}}/
-        # Our org name is in upper-case, not accepted by docker
-        # export DOCKER_REPOSITORY=${{github.repository_owner}}/
-        export DOCKER_REPOSITORY=openairinterface/
+        export DOCKER_REPOSITORY=${{env.IMAGE_REPOSITORY}}/
         if ${{ github.event_name == 'push' }}; then
           export DOCKER_TAG=ngap-tester
         elif ${{ github.event_name == 'pull_request' }}; then
@@ -66,8 +65,7 @@ jobs:
       run: |
         cd third-party/gnbsim
         export DOCKER_REGISTRY=${{env.REGISTRY}}/
-        #export DOCKER_REPOSITORY=${{github.repository_owner}}/
-        export DOCKER_REPOSITORY=openairinterface/
+        export DOCKER_REPOSITORY=$${{env.IMAGE_REPOSITORY}}/
         if ${{ github.event_name == 'push' }}; then
           export DOCKER_TAG=ngap-tester
         elif ${{ github.event_name == 'pull_request' }}; then
@@ -96,12 +94,11 @@ jobs:
 
     - name: Pull images
       run: |
-        export DOCKER_REPOSITORY=openairinterface/
         if ${{ github.event_name == 'push' }}; then
-          export DOCKER_TAG=ngap-tester
+          echo "DOCKER_TAG=ngap-tester" >> $GITHUB_ENV
         elif ${{ github.event_name == 'pull_request' }}; then
-          export DOCKER_TAG=pr-${{github.event.pull_request.number}}
+          echo "DOCKER_TAG=pr-"${{github.event.pull_request.number}} >> $GITHUB_ENV
         fi
-        docker pull ${{env.REGISTRY}}/${{env.DOCKER_REPOSITORY}}/${{env.IMAGE_NAME}}:${{env.DOCKER_TAG}}
-        docker pull ${{env.REGISTRY}}/${{env.DOCKER_REPOSITORY}}/oai-amf:develop
+        docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:${{env.DOCKER_TAG}}
+        docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-amf:develop
         docker images
