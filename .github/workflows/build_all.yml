@@ -63,15 +63,11 @@ jobs:
     - name: Push the docker image to ghcr.io
       if: success()
       run: |
-        cd third-party/gnbsim
-        export DOCKER_REGISTRY=${{env.REGISTRY}}/
-        export DOCKER_REPOSITORY=openairinterface/
         if ${{ github.event_name == 'push' }}; then
-          export DOCKER_TAG=ngap-tester
+          docker push ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:ngap-tester
         elif ${{ github.event_name == 'pull_request' }}; then
-          export DOCKER_TAG=pr-${{github.event.pull_request.number}}
+          docker push ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:pr-${{github.event.pull_request.number}}
         fi
-        make docker-push
 
   sanity-test-x64:
     needs: build-x64
