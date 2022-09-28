@@ -65,7 +65,7 @@ jobs:
       run: |
         cd third-party/gnbsim
         export DOCKER_REGISTRY=${{env.REGISTRY}}/
-        export DOCKER_REPOSITORY=$${{env.IMAGE_REPOSITORY}}/
+        export DOCKER_REPOSITORY=openairinterface/
         if ${{ github.event_name == 'push' }}; then
           export DOCKER_TAG=ngap-tester
         elif ${{ github.event_name == 'pull_request' }}; then
