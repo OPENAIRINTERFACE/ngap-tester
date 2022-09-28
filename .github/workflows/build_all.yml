@@ -102,4 +102,5 @@ jobs:
         fi
         docker images
         docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-amf:develop
+        docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/mysql:5.7
         docker images
