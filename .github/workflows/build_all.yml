@@ -90,7 +90,8 @@ jobs:
 
     - name: Pull images
       run: |
-        docker images
+        docker --version
+        docker pull --help
         if ${{ github.event_name == 'push' }}; then
           docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:ngap-tester
           docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:ngap-tester ${{env.IMAGE_NAME}}:ngap-tester
@@ -99,10 +100,44 @@ jobs:
           docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:pr-${{github.event.pull_request.number}} ${{env.IMAGE_NAME}}:pr-${{github.event.pull_request.number}}
         fi
         docker images
-        docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-amf:develop
-        docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-amf:develop oai-amf:develop
         docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/mysql:5.7
-        docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/mysql:5.7 mysql:5.7
         docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-nrf:develop
+        docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-udr:develop
+        docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-udm:develop
+        docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-ausf:develop
+        docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-amf:develop
+        docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-smf:develop
+        docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-spgwu-tiny:develop
+        docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/trf-gen-cn5g:latest
+
+        docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/mysql:5.7 mysql:5.7
         docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-nrf:develop oai-nrf:develop
+        docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-udr:develop oai-udr:develop
+        docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-udm:develop oai-udm:develop
+        docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-ausf:develop oai-ausf:develop
+        docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-amf:develop oai-amf:develop
+        docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-smf:develop oai-smf:develop
+        docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-spgwu-tiny:develop oai-spgwu-tiny:develop
+        docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/trf-gen-cn5g:latest trf-gen-cn5g:latest
+        docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-amf:develop oai-amf:develop
         docker images
+
+    - name: Deploy OAI 5G Core
+      run: |
+        docker-compose --version
+        cd ${{env.GITHUB_WORKSPACE}}/test
+        docker-compose -f test/docker-compose-basic-nrf.yaml up -d mysql
+        which tcpdump || true
+        which tshark || true
+        sleep 10
+        docker-compose -f test/docker-compose-basic-nrf.yaml up -d
+        sleep 10
+        docker-compose -f test/docker-compose-basic-nrf.yaml ps -a
+
+    - name: Undeploy OAI 5G Core
+      run: |
+        cd ${{env.GITHUB_WORKSPACE}}/test
+        docker-compose -f test/docker-compose-basic-nrf.yaml down -t 0
+        docker-compose -f test/docker-compose-basic-nrf.yaml ps -a
+
+
