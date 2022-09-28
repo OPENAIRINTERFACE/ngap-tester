@@ -94,13 +94,11 @@ jobs:
 
     - name: Pull images
       run: |
-        if ${{ github.event_name == 'push' }}; then
-          echo "DOCKER_TAG=ngap-tester" >> $GITHUB_ENV
-        elif ${{ github.event_name == 'pull_request' }}; then
-          echo "DOCKER_TAG=pr-${{github.event.pull_request.number}}" >> $GITHUB_ENV
-        fi
-        env
         docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-amf:develop
         docker images
-        docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:${{env.DOCKER_TAG}}
+        if ${{ github.event_name == 'push' }}; then
+          docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:ngap-tester
+        elif ${{ github.event_name == 'pull_request' }}; then
+          docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:pr-${{github.event.pull_request.number}}
+        fi
         docker images
