@@ -123,13 +123,11 @@ jobs:
       run: |
         cd ${{github.workspace}}/test
         docker-compose -f docker-compose-basic-nrf.yaml up -d mysql
-        sleep 10
+        sleep 5
         nohup sudo tcpdump -i demo-oai -w /tmp/oai-cn5g-omec-gnbsim.pcap > /dev/null 2>&1 &
         docker-compose -f docker-compose-basic-nrf.yaml up -d
-        # Instead of sleep 10; we need to poll w/ a loop
-        sleep 10
-        ps aux | grep tcpdump || true
-        docker-compose -f docker-compose-basic-nrf.yaml ps -a
+        # Check if the OAI 5G-CN deployed correctly
+        ./check-oai-cn5g-status.py
 
     - name: Deploy gnbsim RAN emulator
       run: |
@@ -139,9 +137,9 @@ jobs:
         elif ${{ github.event_name == 'pull_request' }}; then
           sed -i -e "s@${{env.IMAGE_NAME}}:0.0.1-dev@${{env.IMAGE_NAME}}:pr-${{github.event.pull_request.number}}@" docker-compose-omec-gnbsim.yaml
         fi
-        git diff docker-compose-omec-gnbsim.yaml
         docker-compose -f docker-compose-omec-gnbsim.yaml up -d
-        sleep 30
+        # Check if all profiles finished and passed
+        ./check-omec-gnbsim-status.py
 
     - name: Retrieve logs and pcap file
       if: always()
@@ -156,16 +154,15 @@ jobs:
         docker logs oai-amf > logs/oai-amf.log 2>&1 || true
         docker logs oai-smf > logs/oai-smf.log 2>&1 || true
         docker logs oai-spgwu > logs/oai-spgwu.log 2>&1 || true
-        sudo chmod 666 /tmp/oai-cn5g-omec-gnbsim.pcap
-        cp /tmp/oai-cn5g-omec-gnbsim.pcap logs
-        zip -r -qq oai-cn5g-omec-gnbsim.zip logs
+        sudo chmod 666 /tmp/oai-cn5g-omec-gnbsim.pcap || true
+        cp /tmp/oai-cn5g-omec-gnbsim.pcap logs || true
 
     - name: Archive logs
       if: always()
       uses: actions/upload-artifact@v3
       with:
-        name: oai-cn5g-omec-gnbsim.zip
-        path: ${{github.workspace}}/test/oai-cn5g-omec-gnbsim.zip
+        name: oai-cn5g-omec-gnbsim
+        path: ${{github.workspace}}/test/logs/
         retention-days: 5
 
     - name: Undeploy gnbsim RAN emulator
