@@ -170,6 +170,8 @@ def synchronize(args):
             cmd = 'git submodule update'
             subprocess.check_call(cmd, shell=True, universal_newlines=True)  # noqa: S602
         prefix = 'cd ' + sm_path + ' && '
+        cmd = prefix +  'git fetch --prune'
+        subprocess.check_call(cmd, shell=True, universal_newlines=True)  # noqa: S602
         cmd = prefix +  'git clean -x -d -ff'
         subprocess.check_call(cmd, shell=True, universal_newlines=True)  # noqa: S602
         cmd = prefix +  'git reset .'
@@ -177,6 +179,8 @@ def synchronize(args):
         cmd = prefix +  'git checkout .'
         subprocess.check_call(cmd, shell=True, universal_newlines=True)  # noqa: S602
         cmd = prefix +  'git checkout ' + branch
+        subprocess.check_call(cmd, shell=True, universal_newlines=True)  # noqa: S602
+        cmd = prefix +  'git log -n1'
         subprocess.check_call(cmd, shell=True, universal_newlines=True)  # noqa: S602
 
 if __name__ == '__main__':

@@ -9,26 +9,171 @@ on:
       - main
     types: [ opened, reopened, synchronize ]
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_REPOSITORY : openairinterface
+  IMAGE_NAME: 5gc-gnbsim
 
 jobs:
 
   build-x64:
     if: github.repository_owner == 'openairinterface'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
     - uses: actions/setup-python@v4
       with:
         python-version: '3.7' 
     - name: Synchronize with merged branches in git sub-modules
       if: github.event_name == 'push'
-      run: ./scripts/sync-sub-modules.py --synchronize --force
+      run: |
+        ./scripts/sync-sub-modules.py --synchronize --force
     - name: Synchronize with temptative branches in git sub-modules
       if: github.event_name == 'pull_request'
-      run: ./scripts/sync-for-pull-request.sh
+      run: |
+        ./scripts/sync-for-pull-request.sh
+
+    - name: Log in to the Container registry
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Create the docker image
       run: |
         cd third-party/gnbsim
+        export DOCKER_REGISTRY=${{env.REGISTRY}}/
+        export DOCKER_REPOSITORY=${{env.IMAGE_REPOSITORY}}/
+        if ${{ github.event_name == 'push' }}; then
+          export DOCKER_TAG=ngap-tester
+        elif ${{ github.event_name == 'pull_request' }}; then
+          export DOCKER_TAG=pr-${{github.event.pull_request.number}}
+        fi
         make docker-build
         # To see the size of the target image
         docker images
+
+    - name: Push the docker image to ghcr.io
+      if: success()
+      run: |
+        if ${{ github.event_name == 'push' }}; then
+          docker push ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:ngap-tester
+        elif ${{ github.event_name == 'pull_request' }}; then
+          docker push ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:pr-${{github.event.pull_request.number}}
+        fi
+
+  sanity-test-x64:
+    needs: build-x64
+    if: github.repository_owner == 'openairinterface'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Log in to the Container registry
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Pull images
+      run: |
+        if ${{ github.event_name == 'push' }}; then
+          docker pull --quiet ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:ngap-tester
+          docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:ngap-tester ${{env.IMAGE_NAME}}:ngap-tester
+        elif ${{ github.event_name == 'pull_request' }}; then
+          docker pull --quiet ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:pr-${{github.event.pull_request.number}}
+          docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:pr-${{github.event.pull_request.number}} ${{env.IMAGE_NAME}}:pr-${{github.event.pull_request.number}}
+        fi
+        docker pull --quiet ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/mysql:5.7
+        docker pull --quiet ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-nrf:develop
+        docker pull --quiet ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-udr:develop
+        docker pull --quiet ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-udm:develop
+        docker pull --quiet ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-ausf:develop
+        docker pull --quiet ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-amf:develop
+        docker pull --quiet ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-smf:develop
+        docker pull --quiet ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-spgwu-tiny:develop
+        docker pull --quiet ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/trf-gen-cn5g:latest
+
+        docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/mysql:5.7 mysql:5.7
+        docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-nrf:develop oai-nrf:develop
+        docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-udr:develop oai-udr:develop
+        docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-udm:develop oai-udm:develop
+        docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-ausf:develop oai-ausf:develop
+        docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-amf:develop oai-amf:develop
+        docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-smf:develop oai-smf:develop
+        docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-spgwu-tiny:develop oai-spgwu-tiny:develop
+        docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/trf-gen-cn5g:latest trf-gen-cn5g:latest
+        docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-amf:develop oai-amf:develop
+        docker images
+
+    - name: Deploy OAI 5G Core
+      run: |
+        cd ${{github.workspace}}/test
+        docker-compose -f docker-compose-basic-nrf.yaml up -d mysql
+        sleep 5
+        nohup sudo tcpdump -i demo-oai -w /tmp/oai-cn5g-omec-gnbsim.pcap > /dev/null 2>&1 &
+        docker-compose -f docker-compose-basic-nrf.yaml up -d
+        # Check if the OAI 5G-CN deployed correctly
+        ./check-oai-cn5g-status.py
+
+    - name: Deploy gnbsim RAN emulator
+      run: |
+        cd ${{github.workspace}}/test
+        if ${{ github.event_name == 'push' }}; then
+          sed -i -e "s@${{env.IMAGE_NAME}}:0.0.1-dev@${{env.IMAGE_NAME}}:ngap-tester@" docker-compose-omec-gnbsim.yaml
+        elif ${{ github.event_name == 'pull_request' }}; then
+          sed -i -e "s@${{env.IMAGE_NAME}}:0.0.1-dev@${{env.IMAGE_NAME}}:pr-${{github.event.pull_request.number}}@" docker-compose-omec-gnbsim.yaml
+        fi
+        docker-compose -f docker-compose-omec-gnbsim.yaml up -d
+        # Check if all profiles finished and passed
+        ./check-omec-gnbsim-status.py
+
+    - name: Retrieve logs and pcap file
+      if: always()
+      run: |
+        cd ${{github.workspace}}/test
+        mkdir -p logs
+        docker logs omec-gnbsim > logs/omec-gnbsim.log 2>&1 || true
+        docker logs oai-nrf > logs/oai-nrf.log 2>&1 || true
+        docker logs oai-udr > logs/oai-udr.log 2>&1 || true
+        docker logs oai-udm > logs/oai-udm.log 2>&1 || true
+        docker logs oai-ausf > logs/oai-ausf.log 2>&1 || true
+        docker logs oai-amf > logs/oai-amf.log 2>&1 || true
+        docker logs oai-smf > logs/oai-smf.log 2>&1 || true
+        docker logs oai-spgwu > logs/oai-spgwu.log 2>&1 || true
+        sudo chmod 666 /tmp/oai-cn5g-omec-gnbsim.pcap || true
+        cp /tmp/oai-cn5g-omec-gnbsim.pcap logs || true
+
+    - name: Archive logs
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: oai-cn5g-omec-gnbsim
+        path: ${{github.workspace}}/test/logs/
+        retention-days: 5
+
+    - name: Undeploy gnbsim RAN emulator
+      if: always()
+      run: |
+        cd ${{github.workspace}}/test
+        docker-compose -f docker-compose-omec-gnbsim.yaml down -t 0
+
+    - name: Undeploy OAI 5G Core
+      if: always()
+      run: |
+        cd ${{github.workspace}}/test
+        docker-compose -f docker-compose-basic-nrf.yaml down -t 0
+        docker-compose -f docker-compose-basic-nrf.yaml ps -a
