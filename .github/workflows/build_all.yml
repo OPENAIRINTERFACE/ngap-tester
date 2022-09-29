@@ -121,8 +121,7 @@ jobs:
 
     - name: Deploy OAI 5G Core
       run: |
-        docker-compose --version
-        cd ${{env.GITHUB_WORKSPACE}}/test
+        cd ${{github.workspace}}/test
         docker-compose -f test/docker-compose-basic-nrf.yaml up -d mysql
         which tcpdump || true
         which tshark || true
@@ -133,7 +132,7 @@ jobs:
 
     - name: Undeploy OAI 5G Core
       run: |
-        cd ${{env.GITHUB_WORKSPACE}}/test
+        cd ${{github.workspace}}/test
         docker-compose -f test/docker-compose-basic-nrf.yaml down -t 0
         docker-compose -f test/docker-compose-basic-nrf.yaml ps -a
 
