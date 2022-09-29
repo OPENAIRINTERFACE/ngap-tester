@@ -121,15 +121,32 @@ jobs:
 
     - name: Deploy OAI 5G Core
       run: |
-        which tcpdump || true
-        which tshark || true
         cd ${{github.workspace}}/test
-        ls -R
         docker-compose -f docker-compose-basic-nrf.yaml up -d mysql
         sleep 10
+        nohup sudo tcpdump -i demo-oai -w /tmp/oai-cn5g-omec-gnbsim.pcap > /dev/null 2>&1 &
         docker-compose -f docker-compose-basic-nrf.yaml up -d
+        # Instead of sleep 10; we need to poll w/ a loop
         sleep 10
+        ps aux | grep tcpdump || true
         docker-compose -f docker-compose-basic-nrf.yaml ps -a
+
+    - name: Deploy gnbsim RAN emulator
+      run: |
+        cd ${{github.workspace}}/test
+        if ${{ github.event_name == 'push' }}; then
+          sed -i -e "@${{env.IMAGE_NAME}}::0.0.1-dev@${{env.IMAGE_NAME}}:ngap-tester@" docker-compose-omec-gnbsim.yaml
+        elif ${{ github.event_name == 'pull_request' }}; then
+          sed -i -e "@${{env.IMAGE_NAME}}::0.0.1-dev@${{env.IMAGE_NAME}}:pr-${{github.event.pull_request.number}}@" docker-compose-omec-gnbsim.yaml
+        fi
+        docker-compose -f docker-compose-omec-gnbsim.yaml up -d
+        sleep 15
+        docker logs omec-gnbsim 2>&1
+
+    - name: Undeploy gnbsim RAN emulator
+      run: |
+        cd ${{github.workspace}}/test
+        docker-compose -f docker-compose-omec-gnbsim.yaml down -t 0
 
     - name: Undeploy OAI 5G Core
       run: |

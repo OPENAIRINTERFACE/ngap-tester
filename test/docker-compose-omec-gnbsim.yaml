@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+    omec-gnbsim:
+        container_name: omec-gnbsim
+        image: 5gc-gnbsim:0.0.1-dev
+        privileged: true
+        command: bash -c "/gnbsim/bin/gnbsim --cfg /gnbsim/bin/gnbsim.yaml && sleep infinity"
+        networks:
+            public_net:
+                ipv4_address: 192.168.70.171
+        volumes:
+            - ./omec-gnbsim-config.yaml:/gnbsim/bin/gnbsim.yaml
+networks:
+    public_net:
+        external:
+            name: demo-oai-public-net
