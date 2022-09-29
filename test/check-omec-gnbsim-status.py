@@ -28,6 +28,10 @@ NB_PROFILES = 3
 
 def main() -> None:
     logging.debug('\033[0;32m OMEC gnbsim RAN emulator started, checking if all profiles finished... takes few secs\033[0m....')
+    # First using docker ps to see which images were used.
+    cmd = 'docker ps -a'
+    res = run_cmd(cmd, False)
+    print(res)
     notSilentForFirstTime = False
     status = 0
     for x in range(40):
