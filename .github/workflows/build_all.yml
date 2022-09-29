@@ -90,25 +90,22 @@ jobs:
 
     - name: Pull images
       run: |
-        docker --version
-        docker pull --help
         if ${{ github.event_name == 'push' }}; then
-          docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:ngap-tester
+          docker pull --quiet ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:ngap-tester
           docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:ngap-tester ${{env.IMAGE_NAME}}:ngap-tester
         elif ${{ github.event_name == 'pull_request' }}; then
-          docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:pr-${{github.event.pull_request.number}}
+          docker pull --quiet ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:pr-${{github.event.pull_request.number}}
           docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:pr-${{github.event.pull_request.number}} ${{env.IMAGE_NAME}}:pr-${{github.event.pull_request.number}}
         fi
-        docker images
-        docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/mysql:5.7
-        docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-nrf:develop
-        docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-udr:develop
-        docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-udm:develop
-        docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-ausf:develop
-        docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-amf:develop
-        docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-smf:develop
-        docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-spgwu-tiny:develop
-        docker pull ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/trf-gen-cn5g:latest
+        docker pull --quiet ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/mysql:5.7
+        docker pull --quiet ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-nrf:develop
+        docker pull --quiet ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-udr:develop
+        docker pull --quiet ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-udm:develop
+        docker pull --quiet ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-ausf:develop
+        docker pull --quiet ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-amf:develop
+        docker pull --quiet ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-smf:develop
+        docker pull --quiet ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-spgwu-tiny:develop
+        docker pull --quiet ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/trf-gen-cn5g:latest
 
         docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/mysql:5.7 mysql:5.7
         docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-nrf:develop oai-nrf:develop
