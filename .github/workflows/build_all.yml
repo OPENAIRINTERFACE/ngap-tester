@@ -145,6 +145,7 @@ jobs:
 
     - name: Retrieve logs and pcap file
       if: always()
+      run: |
         cd ${{github.workspace}}/test
         mkdir -p logs
         docker logs omec-gnbsim > logs/omec-gnbsim.log 2>&1 || true
