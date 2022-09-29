@@ -135,9 +135,9 @@ jobs:
       run: |
         cd ${{github.workspace}}/test
         if ${{ github.event_name == 'push' }}; then
-          sed -i -e "@${{env.IMAGE_NAME}}::0.0.1-dev@${{env.IMAGE_NAME}}:ngap-tester@" docker-compose-omec-gnbsim.yaml
+          sed -i -e "s@${{env.IMAGE_NAME}}::0.0.1-dev@${{env.IMAGE_NAME}}:ngap-tester@" docker-compose-omec-gnbsim.yaml
         elif ${{ github.event_name == 'pull_request' }}; then
-          sed -i -e "@${{env.IMAGE_NAME}}::0.0.1-dev@${{env.IMAGE_NAME}}:pr-${{github.event.pull_request.number}}@" docker-compose-omec-gnbsim.yaml
+          sed -i -e "s@${{env.IMAGE_NAME}}::0.0.1-dev@${{env.IMAGE_NAME}}:pr-${{github.event.pull_request.number}}@" docker-compose-omec-gnbsim.yaml
         fi
         docker-compose -f docker-compose-omec-gnbsim.yaml up -d
         sleep 15
