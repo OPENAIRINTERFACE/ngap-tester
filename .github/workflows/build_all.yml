@@ -141,19 +141,41 @@ jobs:
         fi
         git diff docker-compose-omec-gnbsim.yaml
         docker-compose -f docker-compose-omec-gnbsim.yaml up -d
-        sleep 15
-        docker logs omec-gnbsim 2>&1
+        sleep 30
+
+    - name: Retrieve logs and pcap file
+      if: always()
+        cd ${{github.workspace}}/test
+        mkdir -p logs
+        docker logs omec-gnbsim > logs/omec-gnbsim.log 2>&1 || true
+        docker logs oai-nrf > logs/oai-nrf.log 2>&1 || true
+        docker logs oai-udr > logs/oai-udr.log 2>&1 || true
+        docker logs oai-udm > logs/oai-udm.log 2>&1 || true
+        docker logs oai-ausf > logs/oai-ausf.log 2>&1 || true
+        docker logs oai-amf > logs/oai-amf.log 2>&1 || true
+        docker logs oai-smf > logs/oai-smf.log 2>&1 || true
+        docker logs oai-spgwu > logs/oai-spgwu.log 2>&1 || true
+        sudo chmod 666 /tmp/oai-cn5g-omec-gnbsim.pcap
+        cp /tmp/oai-cn5g-omec-gnbsim.pcap logs
+        zip -r -qq oai-cn5g-omec-gnbsim.zip logs
+
+    - name: Archive logs
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: oai-cn5g-omec-gnbsim.zip
+        path: ${{github.workspace}}/test/oai-cn5g-omec-gnbsim.zip
+        retention-days: 5
 
     - name: Undeploy gnbsim RAN emulator
+      if: always()
       run: |
         cd ${{github.workspace}}/test
         docker-compose -f docker-compose-omec-gnbsim.yaml down -t 0
-        sudo tcpdump -r /tmp/oai-cn5g-omec-gnbsim.pcap
 
     - name: Undeploy OAI 5G Core
+      if: always()
       run: |
         cd ${{github.workspace}}/test
         docker-compose -f docker-compose-basic-nrf.yaml down -t 0
         docker-compose -f docker-compose-basic-nrf.yaml ps -a
-
-
