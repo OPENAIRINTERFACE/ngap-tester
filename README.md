@@ -24,5 +24,14 @@ Core Network
 
 # Architecture
 
-
 # License
+
+# Building
+
+Locally:
+
+```
+$ go mod vendor
+$ go build -mod=vendor
+$ ./ngap-tester --help
+```
