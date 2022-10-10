@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/openairinterface/ngap-tester/testscenario"
 	"github.com/urfave/cli"
 )
 
@@ -69,7 +70,12 @@ func run_tests(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	log.Print("Running")
+	testArray := testscenario.CreateTestSuite(c)
+	err = testscenario.RunTestsuite(testArray)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -78,7 +84,8 @@ func list_tests(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	log.Print("Listing")
+	testArray := testscenario.CreateTestSuite(c)
+	testscenario.DisplayTestsuite(testArray)
 	return nil
 }
 
