@@ -41,7 +41,11 @@ func ListOfTestFromFile(filename string) []string {
 	for fileScanner.Scan() {
 		testList = append(testList, fileScanner.Text())
 	}
-	readFile.Close()
+	err = readFile.Close()
+	if err != nil {
+		log.Fatalf("could not close test-file %s", filename)
+		return testList
+	}
 	return testList
 }
 

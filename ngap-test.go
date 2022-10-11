@@ -91,7 +91,6 @@ func list_tests(c *cli.Context) error {
 }
 
 func check_flags(c *cli.Context) error {
-
 	run_all := c.Bool("all")
 	run_random := c.Bool("random")
 	testFile := c.String("test-file")
