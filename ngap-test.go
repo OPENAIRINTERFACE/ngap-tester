@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"os"
 
@@ -106,6 +107,9 @@ func check_flags(c *cli.Context) error {
 	}
 	if testFile != "" {
 		nbOptions++
+		if _, err := os.Stat(testFile); errors.Is(err, os.ErrNotExist) {
+			return cli.NewExitError("The test file does not exist", 5)
+		}
 	}
 	if testName != "" {
 		nbOptions++

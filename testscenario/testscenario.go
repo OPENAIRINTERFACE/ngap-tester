@@ -1,8 +1,10 @@
 package testscenario
 
 import (
+	"bufio"
 	"log"
 	"math/rand"
+	"os"
 	"time"
 
 	"github.com/urfave/cli"
@@ -24,14 +26,43 @@ type TestScenario struct {
 	Action      func(test *TestScenario) error
 }
 
+func ListOfTestFromFile(filename string) []string {
+	var testList []string
+	if filename == "" {
+		return testList
+	}
+	readFile, err := os.Open(filename)
+	if err != nil {
+		log.Fatalf("could not open test-file %s", filename)
+		return testList
+	}
+	fileScanner := bufio.NewScanner(readFile)
+	fileScanner.Split(bufio.ScanLines)
+	for fileScanner.Scan() {
+		testList = append(testList, fileScanner.Text())
+	}
+	readFile.Close()
+	return testList
+}
+
+func CheckIfTestIsInList(testName string, testList []string) bool {
+	for _, value := range testList {
+		if value == testName {
+			return true
+		}
+	}
+	return false
+}
+
 func CreateTestSuite(c *cli.Context) []TestScenario {
 	var testSuite []TestScenario
 	run_all := c.Bool("all")
 	run_random := c.Bool("random")
 	testName := c.String("one-test")
-	// TODO : handle the case when a list of scenarios is provided in a file
+	testFile := c.String("test-file")
+	testsList := ListOfTestFromFile(testFile)
 
-	if run_all || run_random || testName == "TC1" {
+	if run_all || run_random || testName == "TC1" || CheckIfTestIsInList("TC1", testsList) {
 		scenario := TestScenario{
 			Id:          "TC1",
 			Description: "UE Initiated Registration Procedures - SUCIas id (UE and AMF Interactions- NAS) - Single gNB",
@@ -39,7 +70,7 @@ func CreateTestSuite(c *cli.Context) []TestScenario {
 			Action:      runScenarioTC1}
 		testSuite = append(testSuite, scenario)
 	}
-	if run_all || run_random || testName == "TC1a" {
+	if run_all || run_random || testName == "TC1a" || CheckIfTestIsInList("TC1a", testsList) {
 		scenario := TestScenario{
 			Id:          "TC1a",
 			Description: "Loop SUCI Registration with Single UE",
