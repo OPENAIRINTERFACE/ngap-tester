@@ -1,0 +1,78 @@
+name: build-test-ngap-tester
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    types: [ opened, reopened, synchronize ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_REPOSITORY : openairinterface
+  IMAGE_NAME: ngap-tester
+
+jobs:
+
+  build-ngap-tester-x64:
+    if: github.repository_owner == 'openairinterface'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Log in to the Container registry
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create the docker image
+      run: |
+        export DOCKER_REGISTRY=${{env.REGISTRY}}/
+        export DOCKER_REPOSITORY=${{env.IMAGE_REPOSITORY}}/
+        if ${{ github.event_name == 'push' }}; then
+          export DOCKER_TAG=latest
+        elif ${{ github.event_name == 'pull_request' }}; then
+          export DOCKER_TAG=pr-${{github.event.pull_request.number}}
+        fi
+        make docker-build
+        # To see the size of the target image
+        docker images
+
+    - name: Sanity Run
+      if: success()
+      run: |
+        cd ${{github.workspace}}
+        mkdir -p logs
+        if ${{ github.event_name == 'push' }}; then
+          docker run --name test-ngap-tester ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:latest | tee logs/ngap-tester.log
+        elif ${{ github.event_name == 'pull_request' }}; then
+          docker run --name test-ngap-tester ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:pr-${{github.event.pull_request.number}} | tee logs/ngap-tester.log
+        fi
+        docker rm -f test-ngap-tester
+
+    - name: Archive logs
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: ngap-tester-check
+        path: ${{github.workspace}}/logs/
+        retention-days: 5
+
+    - name: Push the docker image to ghcr.io
+      if: success()
+      run: |
+        if ${{ github.event_name == 'push' }}; then
+          docker push ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:latest
+        elif ${{ github.event_name == 'pull_request' }}; then
+          docker push ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:pr-${{github.event.pull_request.number}}
+        fi
+
