@@ -7,7 +7,8 @@
 
 # Continuous Integration Status
 
-![Build Status](https://github.com/openairinterface/ngap-tester/actions/workflows/build_all.yml/badge.svg?branch=main)
+![Legacy Build Status](https://github.com/openairinterface/ngap-tester/actions/workflows/build_legacy_gnbsim.yml/badge.svg?branch=main)
+![NGAP-Tester Build Status](https://github.com/openairinterface/ngap-tester/actions/workflows/build_ngap_tester.yml/badge.svg?branch=main)
 ![Go Linter Status](https://github.com/openairinterface/ngap-tester/actions/workflows/golangci-lint.yml/badge.svg?branch=main)
 
 # Introduction
