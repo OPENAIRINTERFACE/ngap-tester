@@ -20,6 +20,7 @@ jobs:
       uses: golangci/golangci-lint-action@v3
       with:
         version: v1.49
+        args: --timeout=3m
 
   golangci-nas:
     if: github.repository_owner == 'openairinterface'
@@ -40,6 +41,7 @@ jobs:
       with:
         version: v1.49
         working-directory: third-party/nas
+        args: --timeout=3m
 
   golangci-ngap:
     if: github.repository_owner == 'openairinterface'
@@ -60,6 +62,7 @@ jobs:
       with:
         version: v1.49
         working-directory: third-party/ngap
+        args: --timeout=3m
 
   golangci-gnbsim:
     if: github.repository_owner == 'openairinterface'
@@ -80,4 +83,5 @@ jobs:
       with:
         version: v1.49
         working-directory: third-party/gnbsim
+        args: --timeout=3m
 
