@@ -50,14 +50,15 @@ jobs:
     - name: Sanity Run
       if: success()
       run: |
+        if ${{ github.event_name == 'push' }}; then
+          docker run --name test-ngap-tester ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:latest
+        elif ${{ github.event_name == 'pull_request' }}; then
+          docker run --name test-ngap-tester ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:pr-${{github.event.pull_request.number}}
+        fi
         cd ${{github.workspace}}
         mkdir -p logs
-        if ${{ github.event_name == 'push' }}; then
-          docker run --name test-ngap-tester ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:latest | tee logs/ngap-tester.log
-        elif ${{ github.event_name == 'pull_request' }}; then
-          docker run --name test-ngap-tester ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:pr-${{github.event.pull_request.number}} | tee logs/ngap-tester.log
-        fi
-        docker rm -f test-ngap-tester
+        docker logs test-ngap-tester > logs/ngap-tester.log 2>&1 || true
+        docker rm -f test-ngap-tester || true
 
     - name: Archive logs
       if: always()
