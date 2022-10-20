@@ -1,4 +1,4 @@
-name: build-all
+name: build-legacy-gnbsim
 
 on:
   push:
@@ -16,7 +16,7 @@ env:
 
 jobs:
 
-  build-x64:
+  build-legacy-x64:
     if: github.repository_owner == 'openairinterface'
     runs-on: ubuntu-latest
     permissions:
@@ -69,8 +69,8 @@ jobs:
           docker push ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/${{env.IMAGE_NAME}}:pr-${{github.event.pull_request.number}}
         fi
 
-  sanity-test-x64:
-    needs: build-x64
+  sanity-test-legacy-x64:
+    needs: build-legacy-x64
     if: github.repository_owner == 'openairinterface'
     runs-on: ubuntu-latest
     permissions:
