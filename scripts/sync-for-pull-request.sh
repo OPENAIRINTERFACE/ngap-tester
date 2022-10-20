@@ -8,6 +8,6 @@
 ./scripts/sync-sub-modules.py \
    --synchronize \
    --force \
-   --gnbsim ngap-tester \
+   --gnbsim golint-oct-fixes \
    --nas ngap-tester \
    --ngap ngap-tester
