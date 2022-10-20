@@ -8,6 +8,6 @@
 ./scripts/sync-sub-modules.py \
    --synchronize \
    --force \
-   --gnbsim golint-oct-fixes \
+   --gnbsim upstream-2022-10-20-sync \
    --nas ngap-tester \
    --ngap ngap-tester
