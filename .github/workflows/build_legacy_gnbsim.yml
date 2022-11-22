@@ -150,7 +150,8 @@ jobs:
       run: |
         cd ${{github.workspace}}/test
         mkdir -p logs
-        docker logs omec-gnbsim > logs/omec-gnbsim.log 2>&1 || true
+        docker logs omec-gnbsim-1 > logs/omec-gnbsim-1.log 2>&1 || true
+        docker logs omec-gnbsim-2 > logs/omec-gnbsim-2.log 2>&1 || true
         docker logs oai-nrf > logs/oai-nrf.log 2>&1 || true
         docker logs oai-udr > logs/oai-udr.log 2>&1 || true
         docker logs oai-udm > logs/oai-udm.log 2>&1 || true

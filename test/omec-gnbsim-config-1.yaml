@@ -54,7 +54,7 @@ configuration:
       gnbName: gnb1 # gNB to be used for this profile
       startImsi: 208950000000031
       ueCount: 5
-      defaultAs: "192.168.70.134" #default icmp pkt destination
+      defaultAs: "192.168.70.135" #default icmp pkt destination
       opc: "63bfa50ee6523365ff14c1f45f88737d"
       key: "0C0A34601D4F07677303652C0462535B"
       sequenceNumber: "16f3b3f70fc2"
@@ -106,7 +106,7 @@ configuration:
       gnbName: gnb1 # gNB to be used for this profile
       startImsi: 208950000000125 # First IMSI. Subsequent values will be used if ueCount is more than 1
       ueCount: 1 # Number of UEs for for which the profile will be executed
-      defaultAs: "192.168.70.134" #default icmp pkt destination
+      defaultAs: "192.168.70.135" #default icmp pkt destination
       opc: "63bfa50ee6523365ff14c1f45f88737d"
       key: "0C0A34601D4F07677303652C0462535B"
       sequenceNumber: "16f3b3f70fc2"
@@ -122,8 +122,8 @@ configuration:
       enable: true # Set true to execute the profile, false otherwise.
       gnbName: gnb1 # gNB to be used for this profile
       startImsi: 208950000000125 # First IMSI. Subsequent values will be used if ueCount is more than 1
-      ueCount: 500 # Number of UEs for for which the profile will be executed
-      defaultAs: "0.0.0.0" #default icmp pkt destination -- here it is bypassed
+      ueCount: 3 # Number of UEs for for which the profile will be executed
+      defaultAs: "192.168.70.135" #default icmp pkt destination -- here it is bypassed
       opc: "63bfa50ee6523365ff14c1f45f88737d"
       key: "0C0A34601D4F07677303652C0462535B"
       sequenceNumber: "16f3b3f70fc2"
@@ -186,6 +186,24 @@ configuration:
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 95 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+    - profileType: pdusessest # profile type
+      profileName: profile9 # uniqely identifies a profile within application
+      enable: true # Set true to execute the profile, false otherwise.
+      gnbName: gnb1 # gNB to be used for this profile
+      startImsi: 208950000000130 # First IMSI. Subsequent values will be used if ueCount is more than 1
+      ueCount: 100 # Number of UEs for for which the profile will be executed
+      defaultAs: "0.0.0.0" #default icmp pkt destination
+      opc: "63bfa50ee6523365ff14c1f45f88737d"
+      key: "0C0A34601D4F07677303652C0462535B"
+      sequenceNumber: "16f3b3f70fc2"
+      dnn: "default"
+      sNssai:
+        sst: 222 # Slice/Service Type (uinteger, range: 0~255)
+        sd: 00007B # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
+      plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
+        mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
+        mnc: 95 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+      dataPktCount: 5 # Number of UL user data packets to be transmitted. Common for all UEs
 
 logger:
   logLevel: debug # how detailed the log will be, values: trace, debug, info, warn, error, fatal, panic
