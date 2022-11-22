@@ -34,7 +34,7 @@ def main() -> None:
     print(res)
     notSilentForFirstTime = False
     status = 0
-    for x in range(40):
+    for x in range(100):
         cmd = f'docker logs omec-gnbsim 2>&1 | grep --colour=never "Profile " || true'
         res = run_cmd(cmd, notSilentForFirstTime)
         notSilentForFirstTime = True
@@ -51,7 +51,7 @@ def main() -> None:
                 status = -1
             print(res)
             break
-        time.sleep(2)
+        time.sleep(10)
     if cnt != NB_PROFILES:
         logging.error('\033[0;31m Some profiles could not finish\033[0m....')
         print(res)
