@@ -20,6 +20,26 @@ services:
                 ipv4_address: 192.168.70.172
         volumes:
             - ./omec-gnbsim-config-2.yaml:/gnbsim/bin/gnbsim.yaml
+    omec-gnbsim-3:
+        container_name: omec-gnbsim-3
+        image: 5gc-gnbsim:0.0.1-dev
+        privileged: true
+        command: bash -c "/gnbsim/bin/gnbsim --cfg /gnbsim/bin/gnbsim.yaml && sleep infinity"
+        networks:
+            public_net:
+                ipv4_address: 192.168.70.173
+        volumes:
+            - ./omec-gnbsim-config-3.yaml:/gnbsim/bin/gnbsim.yaml
+    omec-gnbsim-4:
+        container_name: omec-gnbsim-4
+        image: 5gc-gnbsim:0.0.1-dev
+        privileged: true
+        command: bash -c "/gnbsim/bin/gnbsim --cfg /gnbsim/bin/gnbsim.yaml && sleep infinity"
+        networks:
+            public_net:
+                ipv4_address: 192.168.70.174
+        volumes:
+            - ./omec-gnbsim-config-4.yaml:/gnbsim/bin/gnbsim.yaml
 networks:
     public_net:
         external:

@@ -36,35 +36,47 @@ def main() -> None:
     notSilentForFirstTime = False
     status = 0
     for x in range(100):
-        cmd = f'docker logs omec-gnbsim-1 2>&1 | grep --colour=never "Profile " | grep -v "Waiting for UEs to finish processing" || true'
-        res = run_cmd(cmd, notSilentForFirstTime)
+        cmd1 = f'docker logs omec-gnbsim-1 2>&1 | grep --colour=never "Profile " | grep -v "Waiting for UEs to finish processing" || true'
+        res1 = run_cmd(cmd1, notSilentForFirstTime)
         cmd2 = f'docker logs omec-gnbsim-2 2>&1 | grep --colour=never "Profile " | grep -v "Waiting for UEs to finish processing" || true'
         res2 = run_cmd(cmd2, notSilentForFirstTime)
+        cmd3 = f'docker logs omec-gnbsim-3 2>&1 | grep --colour=never "Profile " | grep -v "Waiting for UEs to finish processing" || true'
+        res3 = run_cmd(cmd3, notSilentForFirstTime)
+        cmd4 = f'docker logs omec-gnbsim-4 2>&1 | grep --colour=never "Profile " | grep -v "Waiting for UEs to finish processing" || true'
+        res4 = run_cmd(cmd4, notSilentForFirstTime)
         notSilentForFirstTime = True
-        if res is None or res is None:
+        if res1 is None or res2 is None or res3 is None or res4 is None:
             exit(f'\033[0;31m Incorrect/Unsupported executing command "{cmd}"')
-        cnt = res.count('Profile Status:')
+        cnt1 = res1.count('Profile Status:')
         cnt2 = res2.count('Profile Status:')
-        passing = res.count('Profile Status: PASS')
+        cnt3 = res3.count('Profile Status:')
+        cnt4 = res4.count('Profile Status:')
+        passing1 = res1.count('Profile Status: PASS')
         passing2 = res2.count('Profile Status: PASS')
-        if cnt == NB_PROFILES and cnt2 == NB_PROFILES_2:
+        passing3 = res3.count('Profile Status: PASS')
+        passing4 = res4.count('Profile Status: PASS')
+        if cnt1 == NB_PROFILES and cnt2 == NB_PROFILES_2 and cnt3 == NB_PROFILES_2 and cnt4 == NB_PROFILES_2:
             logging.debug('\033[0;32m All profiles finished\033[0m....')
-            if passing == NB_PROFILES and passing2 == NB_PROFILES_2:
+            if passing1 == NB_PROFILES and passing2 == NB_PROFILES_2 and passing3 == NB_PROFILES_2 and passing4 == NB_PROFILES_2:
                 logging.debug('\033[0;32m All profiles passed\033[0m....')
             else:
                 logging.error('\033[0;32m Some profiles failed\033[0m....')
                 status = -1
-            print(res)
+            print(res1)
             print(res2)
+            print(res3)
+            print(res4)
             break
         time.sleep(10)
     cmd = 'docker ps -a'
     res = run_cmd(cmd, False)
     print(res)
-    if cnt != NB_PROFILES or cnt2 != NB_PROFILES_2:
+    if cnt1 != NB_PROFILES or cnt2 != NB_PROFILES_2 or cnt3 != NB_PROFILES_2 or cnt4 != NB_PROFILES_2:
         logging.error('\033[0;31m Some profiles could not finish\033[0m....')
-        print(res)
+        print(res1)
         print(res2)
+        print(res3)
+        print(res4)
         sys.exit(-1)
     sys.exit(status)
 
