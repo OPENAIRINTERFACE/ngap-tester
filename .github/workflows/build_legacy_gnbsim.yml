@@ -122,6 +122,10 @@ jobs:
     - name: Deploy OAI 5G Core
       run: |
         cd ${{github.workspace}}/test
+        # Adding 1000 UEs to subscribers' list
+        awk -f insert-ues-to-sql-database.awk database/oai_db2.sql > database/oai_db2_big.sql
+        mv database/oai_db2_big.sql database/oai_db2.sql
+        # Will be done later with CURL REST API call to UDR.
         docker-compose -f docker-compose-basic-nrf.yaml up -d mysql
         sleep 5
         nohup sudo tcpdump -i demo-oai -w /tmp/oai-cn5g-omec-gnbsim.pcap > /dev/null 2>&1 &
