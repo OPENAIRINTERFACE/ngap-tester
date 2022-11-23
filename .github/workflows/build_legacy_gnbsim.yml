@@ -161,6 +161,7 @@ jobs:
         docker logs oai-spgwu > logs/oai-spgwu.log 2>&1 || true
         sudo chmod 666 /tmp/oai-cn5g-omec-gnbsim.pcap || true
         cp /tmp/oai-cn5g-omec-gnbsim.pcap logs || true
+        mv *.png logs || true
 
     - name: Archive logs
       if: always()

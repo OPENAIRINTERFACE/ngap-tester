@@ -1,4 +1,4 @@
-BEGIN{n=1000}
+BEGIN{n=4000}
 {
   if (($0 ~/208950000000128/) && ($0 ~/defaultSingleNssais/)) {
     print $0

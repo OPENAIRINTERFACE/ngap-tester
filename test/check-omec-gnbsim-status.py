@@ -14,75 +14,176 @@ limitations under the License.
 """
 
 import logging
+import re
 import subprocess
 import sys
 import time
+import matplotlib.pyplot as plt
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     stream=sys.stdout,
-    format="[%(asctime)s] %(name)s:%(levelname)s: %(message)s"
+    format="[%(asctime)s] %(levelname)8s: %(message)s"
 )
 
+LOOP_CNT = 60
+LOOP_INTERVAL = 5
+NB_GNBSIM_INSTANCES = 4
 NB_PROFILES = 4
 NB_PROFILES_2 = 1
 
 def main() -> None:
-    logging.debug('\033[0;32m OMEC gnbsim RAN emulator started, checking if all profiles finished... takes few secs\033[0m....')
+    plt.set_loglevel("info")
+    logging.info('\033[0;32m OMEC gnbsim RAN emulator started, checking if all profiles finished... takes few secs\033[0m....')
     # First using docker ps to see which images were used.
     cmd = 'docker ps -a'
     res = run_cmd(cmd, False)
     print(res)
     notSilentForFirstTime = False
-    status = 0
-    for x in range(100):
-        cmd1 = f'docker logs omec-gnbsim-1 2>&1 | grep --colour=never "Profile " | grep -v "Waiting for UEs to finish processing" || true'
-        res1 = run_cmd(cmd1, notSilentForFirstTime)
-        cmd2 = f'docker logs omec-gnbsim-2 2>&1 | grep --colour=never "Profile " | grep -v "Waiting for UEs to finish processing" || true'
-        res2 = run_cmd(cmd2, notSilentForFirstTime)
-        cmd3 = f'docker logs omec-gnbsim-3 2>&1 | grep --colour=never "Profile " | grep -v "Waiting for UEs to finish processing" || true'
-        res3 = run_cmd(cmd3, notSilentForFirstTime)
-        cmd4 = f'docker logs omec-gnbsim-4 2>&1 | grep --colour=never "Profile " | grep -v "Waiting for UEs to finish processing" || true'
-        res4 = run_cmd(cmd4, notSilentForFirstTime)
+    status = -1
+    # Stats Arrays
+    amfTimeX = []
+    amfMemY = []
+    amfCpuY = []
+    nrfTimeX = []
+    nrfMemY = []
+    nrfCpuY = []
+    ausfTimeX = []
+    ausfMemY = []
+    ausfCpuY = []
+    udmTimeX = []
+    udmMemY = []
+    udmCpuY = []
+    udrTimeX = []
+    udrMemY = []
+    udrCpuY = []
+    smfTimeX = []
+    smfCpuY = []
+    smfMemY = []
+    spgwuTimeX = []
+    spgwuMemY = []
+    spgwuCpuY = []
+    for x in range(LOOP_CNT):
+        # Performing some statistics measurements on CPU and Memory usages for each NF
+        stats = run_cmd('docker stats --no-stream', notSilentForFirstTime)
+        for line in stats.split('\n'):
+            if line.count('oai-amf') > 0:
+                result = re.search(' (?P<cpu_usage>[0-9\.]+)% *(?P<memory_usage>[0-9\.]+)MiB / ', line)
+                if result is not None:
+                    amfTimeX.append(x * LOOP_INTERVAL)
+                    amfCpuY.append(float(result.group('cpu_usage')))
+                    amfMemY.append(float(result.group('memory_usage')))
+            if line.count('oai-nrf') > 0:
+                result = re.search(' (?P<cpu_usage>[0-9\.]+)% *(?P<memory_usage>[0-9\.]+)MiB / ', line)
+                if result is not None:
+                    nrfTimeX.append(x * LOOP_INTERVAL)
+                    nrfCpuY.append(float(result.group('cpu_usage')))
+                    nrfMemY.append(float(result.group('memory_usage')))
+            if line.count('oai-ausf') > 0:
+                result = re.search(' (?P<cpu_usage>[0-9\.]+)% *(?P<memory_usage>[0-9\.]+)MiB / ', line)
+                if result is not None:
+                    ausfTimeX.append(x * LOOP_INTERVAL)
+                    ausfCpuY.append(float(result.group('cpu_usage')))
+                    ausfMemY.append(float(result.group('memory_usage')))
+            if line.count('oai-udm') > 0:
+                result = re.search(' (?P<cpu_usage>[0-9\.]+)% *(?P<memory_usage>[0-9\.]+)MiB / ', line)
+                if result is not None:
+                    udmTimeX.append(x * LOOP_INTERVAL)
+                    udmCpuY.append(float(result.group('cpu_usage')))
+                    udmMemY.append(float(result.group('memory_usage')))
+            if line.count('oai-udr') > 0:
+                result = re.search(' (?P<cpu_usage>[0-9\.]+)% *(?P<memory_usage>[0-9\.]+)MiB / ', line)
+                if result is not None:
+                    udrTimeX.append(x * LOOP_INTERVAL)
+                    udrCpuY.append(float(result.group('cpu_usage')))
+                    udrMemY.append(float(result.group('memory_usage')))
+            if line.count('oai-smf') > 0:
+                result = re.search(' (?P<cpu_usage>[0-9\.]+)% *(?P<memory_usage>[0-9\.]+)MiB / ', line)
+                if result is not None:
+                    smfTimeX.append(x * LOOP_INTERVAL)
+                    smfCpuY.append(float(result.group('cpu_usage')))
+                    smfMemY.append(float(result.group('memory_usage')))
+            if line.count('oai-spgwu') > 0:
+                result = re.search(' (?P<cpu_usage>[0-9\.]+)% *(?P<memory_usage>[0-9\.]+)MiB / ', line)
+                if result is not None:
+                    spgwuTimeX.append(x * LOOP_INTERVAL)
+                    spgwuCpuY.append(float(result.group('cpu_usage')))
+                    spgwuMemY.append(float(result.group('memory_usage')))
+        # Checking the status of each gnbsim container
+        ret = []
+        for idx in range(NB_GNBSIM_INSTANCES):
+            cmd = f'docker logs omec-gnbsim-{idx + 1} 2>&1 | grep --colour=never "Profile " | grep -v "Waiting for UEs to finish processing" || true'
+            tmpRet = run_cmd(cmd, notSilentForFirstTime)
+            if tmpRet is None:
+                exit(f'\033[0;31m Incorrect/Unsupported executing command "{cmd}"')
+            ret.append(str(tmpRet))
         notSilentForFirstTime = True
-        if res1 is None or res2 is None or res3 is None or res4 is None:
-            exit(f'\033[0;31m Incorrect/Unsupported executing command "{cmd}"')
-        cnt1 = res1.count('Profile Status:')
-        cnt2 = res2.count('Profile Status:')
-        cnt3 = res3.count('Profile Status:')
-        cnt4 = res4.count('Profile Status:')
-        passing1 = res1.count('Profile Status: PASS')
-        passing2 = res2.count('Profile Status: PASS')
-        passing3 = res3.count('Profile Status: PASS')
-        passing4 = res4.count('Profile Status: PASS')
-        if cnt1 == NB_PROFILES and cnt2 == NB_PROFILES_2 and cnt3 == NB_PROFILES_2 and cnt4 == NB_PROFILES_2:
-            logging.debug('\033[0;32m All profiles finished\033[0m....')
-            if passing1 == NB_PROFILES and passing2 == NB_PROFILES_2 and passing3 == NB_PROFILES_2 and passing4 == NB_PROFILES_2:
-                logging.debug('\033[0;32m All profiles passed\033[0m....')
+        allFinished = True
+        allPassing = True
+        for idx in range(NB_GNBSIM_INSTANCES):
+            cnt = ret[idx].count('Profile Status:')
+            passing = ret[idx].count('Profile Status: PASS')
+            if idx == 0:
+                if cnt != NB_PROFILES:
+                    allFinished = False
+                if passing != NB_PROFILES:
+                    allPassing = False
+            else:
+                if cnt != NB_PROFILES_2:
+                    allFinished = False
+                if passing != NB_PROFILES_2:
+                    allPassing = False
+        if allFinished:
+            logging.info('\033[0;32m All profiles finished\033[0m....')
+            if allPassing:
+                logging.info('\033[0;32m All profiles passed\033[0m....')
             else:
                 logging.error('\033[0;32m Some profiles failed\033[0m....')
                 status = -1
-            print(res1)
-            print(res2)
-            print(res3)
-            print(res4)
+            for idx in range(NB_GNBSIM_INSTANCES):
+                print(ret[idx])
             break
-        time.sleep(10)
+        time.sleep(LOOP_INTERVAL)
     cmd = 'docker ps -a'
     res = run_cmd(cmd, False)
-    print(res)
-    if cnt1 != NB_PROFILES or cnt2 != NB_PROFILES_2 or cnt3 != NB_PROFILES_2 or cnt4 != NB_PROFILES_2:
+    # Generating a plot for memory usage
+    plt.plot(amfTimeX, amfMemY, label='AMF')
+    plt.plot(nrfTimeX, nrfMemY, label='NRF')
+    plt.plot(ausfTimeX, ausfMemY, label='AUSF')
+    plt.plot(udmTimeX, udmMemY, label='UDM')
+    plt.plot(udrTimeX, udrMemY, label='UDR')
+    plt.plot(smfTimeX, smfMemY, label='SMF')
+    plt.plot(spgwuTimeX, spgwuMemY, label='SPGWU')
+    plt.legend()
+    plt.title('Memory Usage per NF')
+    plt.ylabel('MiB')
+    plt.xlabel('seconds')
+    plt.savefig('oai-cn5g-memory.png')
+    plt.cla()
+    plt.clf()
+    # Generating a plot for cpu usage
+    plt.plot(amfTimeX, amfCpuY, label='AMF')
+    plt.plot(nrfTimeX, nrfCpuY, label='NRF')
+    plt.plot(ausfTimeX, ausfCpuY, label='AUSF')
+    plt.plot(udmTimeX, udmCpuY, label='UDM')
+    plt.plot(udrTimeX, udrCpuY, label='UDR')
+    plt.plot(smfTimeX, smfCpuY, label='SMF')
+    plt.plot(spgwuTimeX, spgwuCpuY, label='SPGWU')
+    plt.legend()
+    plt.title('CPU Usage per NF')
+    plt.ylabel('%age')
+    plt.xlabel('seconds')
+    plt.savefig('oai-cn5g-cpu.png')
+    if not allFinished:
         logging.error('\033[0;31m Some profiles could not finish\033[0m....')
-        print(res1)
-        print(res2)
-        print(res3)
-        print(res4)
+        for idx in range(NB_GNBSIM_INSTANCES):
+            print(ret[idx])
         sys.exit(-1)
     sys.exit(status)
 
 def run_cmd(cmd, silent=True):
     if not silent:
-        logging.debug(cmd)
+        logging.info(cmd)
     result = None
     try:
         res = subprocess.run(cmd,

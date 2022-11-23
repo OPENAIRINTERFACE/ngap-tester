@@ -19,15 +19,15 @@ import sys
 import time
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     stream=sys.stdout,
-    format="[%(asctime)s] %(name)s:%(levelname)s: %(message)s"
+    format="[%(asctime)s] %(levelname)8s: %(message)s"
 )
 
 NB_HEALTHY_CONTAINERS_IN_BASIC_NRF = 8
 
 def main() -> None:
-    logging.debug('\033[0;32m OAI 5G Core network started, checking the health status of the containers... takes few secs\033[0m....')
+    logging.info('\033[0;32m OAI 5G Core network started, checking the health status of the containers... takes few secs\033[0m....')
     notSilentForFirstTime = False
     for x in range(40):
         cmd = f'docker-compose -f docker-compose-basic-nrf.yaml ps -a'
@@ -37,7 +37,7 @@ def main() -> None:
             exit(f'\033[0;31m Incorrect/Unsupported executing command "{cmd}"')
         cnt = res.count('(healthy)')
         if cnt == NB_HEALTHY_CONTAINERS_IN_BASIC_NRF:
-            logging.debug('\033[0;32m All components are healthy, please see below for more details\033[0m....')
+            logging.info('\033[0;32m All components are healthy, please see below for more details\033[0m....')
             print(res)
             break
         time.sleep(2)
@@ -49,7 +49,7 @@ def main() -> None:
 
 def run_cmd(cmd, silent=True):
     if not silent:
-        logging.debug(cmd)
+        logging.info(cmd)
     result = None
     try:
         res = subprocess.run(cmd,

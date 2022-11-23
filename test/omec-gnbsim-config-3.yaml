@@ -49,10 +49,10 @@ configuration:
         port: 38412 # AMF port
   profiles: # profile information
     - profileType: pdusessest # profile type
-      profileName: profile9 # uniqely identifies a profile within application
+      profileName: profile9-3 # uniqely identifies a profile within application
       enable: true # Set true to execute the profile, false otherwise.
       gnbName: gnb3 # gNB to be used for this profile
-      startImsi: 208950000000330 # First IMSI. Subsequent values will be used if ueCount is more than 1
+      startImsi: 208950000002130 # First IMSI. Subsequent values will be used if ueCount is more than 1
       ueCount: 100 # Number of UEs for for which the profile will be executed
       defaultAs: "0.0.0.0" #default icmp pkt destination
       opc: "63bfa50ee6523365ff14c1f45f88737d"
