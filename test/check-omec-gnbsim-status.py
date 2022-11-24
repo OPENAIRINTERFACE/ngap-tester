@@ -33,7 +33,7 @@ NB_PROFILES = 4
 NB_PROFILES_2 = 1
 
 def main() -> None:
-    plt.set_loglevel("info")
+    #plt.set_loglevel("info")
     logging.info('\033[0;32m OMEC gnbsim RAN emulator started, checking if all profiles finished... takes few secs\033[0m....')
     # First using docker ps to see which images were used.
     cmd = 'docker ps -a'
@@ -146,6 +146,8 @@ def main() -> None:
         time.sleep(LOOP_INTERVAL)
     cmd = 'docker ps -a'
     res = run_cmd(cmd, False)
+    print (res)
+    logging.info('Generating a plot for memory usage')
     # Generating a plot for memory usage
     plt.plot(amfTimeX, amfMemY, label='AMF')
     plt.plot(nrfTimeX, nrfMemY, label='NRF')
@@ -161,6 +163,7 @@ def main() -> None:
     plt.savefig('oai-cn5g-memory.png')
     plt.cla()
     plt.clf()
+    logging.info('Generating a plot for CPU usage')
     # Generating a plot for cpu usage
     plt.plot(amfTimeX, amfCpuY, label='AMF')
     plt.plot(nrfTimeX, nrfCpuY, label='NRF')

@@ -159,6 +159,8 @@ jobs:
         mkdir -p logs
         docker logs omec-gnbsim-1 > logs/omec-gnbsim-1.log 2>&1 || true
         docker logs omec-gnbsim-2 > logs/omec-gnbsim-2.log 2>&1 || true
+        docker logs omec-gnbsim-3 > logs/omec-gnbsim-2.log 2>&1 || true
+        docker logs omec-gnbsim-4 > logs/omec-gnbsim-2.log 2>&1 || true
         docker logs oai-nrf > logs/oai-nrf.log 2>&1 || true
         docker logs oai-udr > logs/oai-udr.log 2>&1 || true
         docker logs oai-udm > logs/oai-udm.log 2>&1 || true
