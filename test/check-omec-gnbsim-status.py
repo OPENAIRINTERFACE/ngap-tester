@@ -33,7 +33,7 @@ NB_PROFILES = 4
 NB_PROFILES_2 = 1
 
 def main() -> None:
-    #plt.set_loglevel("info")
+    plt.set_loglevel("info")
     logging.info('\033[0;32m OMEC gnbsim RAN emulator started, checking if all profiles finished... takes few secs\033[0m....')
     # First using docker ps to see which images were used.
     cmd = 'docker ps -a'
@@ -137,6 +137,7 @@ def main() -> None:
             logging.info('\033[0;32m All profiles finished\033[0m....')
             if allPassing:
                 logging.info('\033[0;32m All profiles passed\033[0m....')
+                status = 0
             else:
                 logging.error('\033[0;32m Some profiles failed\033[0m....')
                 status = -1
