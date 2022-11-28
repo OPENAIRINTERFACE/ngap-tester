@@ -123,7 +123,6 @@ jobs:
         docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-smf:develop oai-smf:develop
         docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-spgwu-tiny:develop oai-spgwu-tiny:develop
         docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/trf-gen-cn5g:latest trf-gen-cn5g:latest
-        docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-amf:develop oai-amf:develop
         docker images
 
     - name: Deploy OAI 5G Core
@@ -248,7 +247,6 @@ jobs:
         docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-smf:develop oai-smf:develop
         docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-upf-vpp:develop oai-upf-vpp:develop
         docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/trf-gen-cn5g:latest trf-gen-cn5g:latest
-        docker image tag ${{env.REGISTRY}}/${{env.IMAGE_REPOSITORY}}/oai-amf:develop oai-amf:develop
         docker images
 
     - name: Deploy OAI 5G Core
@@ -261,7 +259,7 @@ jobs:
         docker-compose -f docker-compose-basic-vpp-nrf.yaml up -d mysql
         sleep 5
         nohup sudo tcpdump -i demo-oai -w /tmp/oai-cn5g-omec-gnbsim-vpp.pcap > /dev/null 2>&1 &
-        docker-compose -f docker-compose-basic-vpp-nrf.yaml.yaml up -d
+        docker-compose -f docker-compose-basic-vpp-nrf.yaml up -d
         # Check if the OAI 5G-CN deployed correctly
         ./check-oai-cn5g-status.py --vpp-upf
 
@@ -328,7 +326,7 @@ jobs:
       if: always()
       run: |
         cd ${{github.workspace}}/test
-        docker-compose -f docker-compose-basic-vpp-nrf.yaml.yaml down -t 0
-        docker-compose -f docker-compose-basic-vpp-nrf.yaml.yaml ps -a
+        docker-compose -f docker-compose-basic-vpp-nrf.yaml down -t 0
+        docker-compose -f docker-compose-basic-vpp-nrf.yaml ps -a
         docker volume prune --force
 
