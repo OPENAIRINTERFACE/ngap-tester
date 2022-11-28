@@ -25,7 +25,7 @@ logging.basicConfig(
     format="[%(asctime)s] %(levelname)8s: %(message)s"
 )
 
-NB_HEALTHY_CONTAINERS_IN_BASIC_NRF = 8
+NB_HEALTHY_CONTAINERS_IN_BASIC_NRF = 9
 
 def main() -> None:
     args = _parse_args()

@@ -167,6 +167,7 @@ jobs:
         docker logs oai-amf > logs/oai-amf.log 2>&1 || true
         docker logs oai-smf > logs/oai-smf.log 2>&1 || true
         docker logs oai-spgwu > logs/oai-spgwu.log 2>&1 || true
+        docker logs oai-ext-dn > logs/oai-ext-dn.log 2>&1 || true
         sudo chmod 666 /tmp/oai-cn5g-omec-gnbsim.pcap || true
         cp /tmp/oai-cn5g-omec-gnbsim.pcap logs || true
         mv *.png logs || true
@@ -302,6 +303,7 @@ jobs:
         docker logs oai-amf > logs/oai-amf.log 2>&1 || true
         docker logs oai-smf > logs/oai-smf.log 2>&1 || true
         docker logs vpp-upf > logs/vpp-upf.log 2>&1 || true
+        docker logs oai-ext-dn > logs/oai-ext-dn.log 2>&1 || true
         sudo chmod 666 /tmp/oai-cn5g-omec-gnbsim-vpp.pcap || true
         cp /tmp/oai-cn5g-omec-gnbsim-vpp.pcap logs || true
         cp docker-compose-omec-gnbsim.yaml logs || true
