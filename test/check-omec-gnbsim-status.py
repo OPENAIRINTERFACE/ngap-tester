@@ -29,8 +29,7 @@ logging.basicConfig(
 LOOP_CNT = 60
 LOOP_INTERVAL = 5
 NB_GNBSIM_INSTANCES = 4
-NB_PROFILES = 4
-NB_PROFILES_2 = 1
+NB_PROFILES = [4, 1, 1, 1]
 
 def main() -> None:
     plt.set_loglevel("info")
@@ -123,16 +122,10 @@ def main() -> None:
         for idx in range(NB_GNBSIM_INSTANCES):
             cnt = ret[idx].count('Profile Status:')
             passing = ret[idx].count('Profile Status: PASS')
-            if idx == 0:
-                if cnt != NB_PROFILES:
-                    allFinished = False
-                if passing != NB_PROFILES:
-                    allPassing = False
-            else:
-                if cnt != NB_PROFILES_2:
-                    allFinished = False
-                if passing != NB_PROFILES_2:
-                    allPassing = False
+            if cnt != NB_PROFILES[idx]:
+                allFinished = False
+            if passing != NB_PROFILES[idx]:
+                allPassing = False
         if allFinished:
             logging.info('\033[0;32m All profiles finished\033[0m....')
             if allPassing:
