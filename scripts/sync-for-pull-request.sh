@@ -2,12 +2,12 @@
 # for each sub-module
 # If you want to re-trigger the CI jobs with the same branches
 # But new commits, just add the commit SHA-ONE as comment
-# gnbsim branch: enable-bypass-traffic-test / 2cfe11cf44980ec15575cbb777585f24ebfde9a4
+# gnbsim branch: nov-2022-upstream-sync / 1b96757165bb029e942ae75964486a01a523f38a
 # nas branch: N/A
 # ngap branch: N/A
 ./scripts/sync-sub-modules.py \
    --synchronize \
    --force \
-   --gnbsim enable-bypass-traffic-test \
+   --gnbsim nov-2022-upstream-sync \
    --nas ngap-tester \
    --ngap ngap-tester
