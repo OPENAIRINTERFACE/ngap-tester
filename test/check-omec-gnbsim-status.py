@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import argparse
 import logging
 import re
 import subprocess
@@ -32,6 +33,9 @@ NB_GNBSIM_INSTANCES = 4
 NB_PROFILES = [4, 1, 1, 1]
 
 def main() -> None:
+    args = _parse_args()
+    if args.vpp_upf:
+        NB_PROFILES[0] = 1
     plt.set_loglevel("info")
     logging.info('\033[0;32m OMEC gnbsim RAN emulator started, checking if all profiles finished... takes few secs\033[0m....')
     # First using docker ps to see which images were used.
@@ -149,7 +153,8 @@ def main() -> None:
     plt.plot(udmTimeX, udmMemY, label='UDM')
     plt.plot(udrTimeX, udrMemY, label='UDR')
     plt.plot(smfTimeX, smfMemY, label='SMF')
-    plt.plot(spgwuTimeX, spgwuMemY, label='SPGWU')
+    if len(spgwuTimeX) > 0:
+        plt.plot(spgwuTimeX, spgwuMemY, label='SPGWU')
     plt.legend()
     plt.title('Memory Usage per NF')
     plt.ylabel('MiB')
@@ -177,6 +182,24 @@ def main() -> None:
             print(ret[idx])
         sys.exit(-1)
     sys.exit(status)
+
+def _parse_args() -> argparse.Namespace:
+    """Parse the command line args
+
+    Returns:
+        argparse.Namespace: the created parser
+    """
+    parser = argparse.ArgumentParser(description='Script to check if OMEC-gnbsim deployment went OK.')
+
+    parser.add_argument(
+        '--vpp-upf',
+        action='store_true',
+        default=False,
+        help='Will use vpp-upf variant for deployment if true; spgwu-tiny variant if false (default)',
+    )
+
+    return parser.parse_args()
+
 
 def run_cmd(cmd, silent=True):
     if not silent:

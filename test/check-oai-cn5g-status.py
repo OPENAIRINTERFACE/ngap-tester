@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import argparse
 import logging
 import subprocess
 import sys
@@ -27,10 +28,17 @@ logging.basicConfig(
 NB_HEALTHY_CONTAINERS_IN_BASIC_NRF = 8
 
 def main() -> None:
+    args = _parse_args()
     logging.info('\033[0;32m OAI 5G Core network started, checking the health status of the containers... takes few secs\033[0m....')
+    if args.vpp_upf:
+        logging.info('Using VPP-UPF variant')
+        dc_file = 'docker-compose-basic-vpp-nrf.yaml'
+    else:
+        logging.info('Using SPGWU-TINY variant')
+        dc_file = 'docker-compose-basic-nrf.yaml'
     notSilentForFirstTime = False
     for x in range(40):
-        cmd = f'docker-compose -f docker-compose-basic-nrf.yaml ps -a'
+        cmd = f'docker-compose -f {dc_file} ps -a'
         res = run_cmd(cmd, notSilentForFirstTime)
         notSilentForFirstTime = True
         if res is None:
@@ -46,6 +54,23 @@ def main() -> None:
         print(res)
         sys.exit(-1)
     sys.exit(0)
+
+def _parse_args() -> argparse.Namespace:
+    """Parse the command line args
+
+    Returns:
+        argparse.Namespace: the created parser
+    """
+    parser = argparse.ArgumentParser(description='Script to validate if OAI-CN5G is ready and healthy.')
+
+    parser.add_argument(
+        '--vpp-upf',
+        action='store_true',
+        default=False,
+        help='Will use vpp-upf variant for deployment if true; spgwu-tiny variant if false (default)',
+    )
+
+    return parser.parse_args()
 
 def run_cmd(cmd, silent=True):
     if not silent:
