@@ -1,7 +1,7 @@
 version: '3.8'
 services:
-    omec-gnbsim:
-        container_name: omec-gnbsim
+    omec-gnbsim-1:
+        container_name: omec-gnbsim-1
         image: 5gc-gnbsim:0.0.1-dev
         privileged: true
         command: bash -c "/gnbsim/bin/gnbsim --cfg /gnbsim/bin/gnbsim.yaml && sleep infinity"
@@ -9,7 +9,37 @@ services:
             public_net:
                 ipv4_address: 192.168.70.171
         volumes:
-            - ./omec-gnbsim-config.yaml:/gnbsim/bin/gnbsim.yaml
+            - ./omec-gnbsim-config-1.yaml:/gnbsim/bin/gnbsim.yaml
+    omec-gnbsim-2:
+        container_name: omec-gnbsim-2
+        image: 5gc-gnbsim:0.0.1-dev
+        privileged: true
+        command: bash -c "/gnbsim/bin/gnbsim --cfg /gnbsim/bin/gnbsim.yaml && sleep infinity"
+        networks:
+            public_net:
+                ipv4_address: 192.168.70.172
+        volumes:
+            - ./omec-gnbsim-config-2.yaml:/gnbsim/bin/gnbsim.yaml
+    omec-gnbsim-3:
+        container_name: omec-gnbsim-3
+        image: 5gc-gnbsim:0.0.1-dev
+        privileged: true
+        command: bash -c "/gnbsim/bin/gnbsim --cfg /gnbsim/bin/gnbsim.yaml && sleep infinity"
+        networks:
+            public_net:
+                ipv4_address: 192.168.70.173
+        volumes:
+            - ./omec-gnbsim-config-3.yaml:/gnbsim/bin/gnbsim.yaml
+    omec-gnbsim-4:
+        container_name: omec-gnbsim-4
+        image: 5gc-gnbsim:0.0.1-dev
+        privileged: true
+        command: bash -c "/gnbsim/bin/gnbsim --cfg /gnbsim/bin/gnbsim.yaml && sleep infinity"
+        networks:
+            public_net:
+                ipv4_address: 192.168.70.174
+        volumes:
+            - ./omec-gnbsim-config-4.yaml:/gnbsim/bin/gnbsim.yaml
 networks:
     public_net:
         external:

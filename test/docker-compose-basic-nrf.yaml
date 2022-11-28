@@ -242,7 +242,7 @@ services:
             - SESSION_AMBR_DL1=200Mbps
             - DNN_NI2=default
             - TYPE2=IPv4
-            - DNN_RANGE2=12.1.1.2 - 12.1.1.50
+            - DNN_RANGE2=13.1.0.2 - 13.1.15.254
             - NSSAI_SST2=222
             - NSSAI_SD2=123
             - SESSION_AMBR_UL2=50Mbps
@@ -268,7 +268,7 @@ services:
             - SGW_INTERFACE_NAME_FOR_SX=eth0
             - PGW_INTERFACE_NAME_FOR_SGI=eth0
             - NETWORK_UE_NAT_OPTION=yes
-            - NETWORK_UE_IP=12.1.1.0/24
+            - NETWORK_UE_IP=13.1.0.0/20
             - SPGWC0_IP_ADDRESS=192.168.70.133
             - BYPASS_UL_PFCP_RULES=no
             - MCC=208
@@ -317,7 +317,7 @@ services:
         privileged: true
         container_name: oai-ext-dn
         entrypoint: /bin/bash -c \
-              "ip route add 12.1.1.0/24 via 192.168.70.134 dev eth0; sleep infinity"
+              "ip route add 13.1.0.0/20 via 192.168.70.134 dev eth0; sleep infinity"
         depends_on:
             - oai-spgwu
         networks:
