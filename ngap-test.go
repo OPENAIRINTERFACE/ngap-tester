@@ -46,6 +46,7 @@ VERSION:
 	app.Name = "NGAP and 5G-NAS Tester"
 	app.Description = "An RAN emulator with a test-suite"
 	app.Version = "0.0.1"
+	app.Usage = "./ngap-tester run --tf [test configuration file]"
 	app.Commands = []cli.Command{
 		{
 			Name:   "run",
@@ -76,8 +77,8 @@ func run_tests(c *cli.Context) error {
 
 	cfg := c.String("cfg")
 	if cfg == "" {
-		log.Printf("No configuration file provided. Using default configuration file:", factory.GNBSIM_DEFAULT_CONFIG_PATH)
-		log.Printf("Application Usage:", c.App.Usage)
+		log.Printf("No configuration file provided. Using default configuration file: %v", factory.GNBSIM_DEFAULT_CONFIG_PATH)
+		log.Printf("Application Usage: %v", c.App.Usage)
 		cfg = factory.GNBSIM_DEFAULT_CONFIG_PATH
 	}
 

@@ -16,25 +16,25 @@ const FIRST_AMF string = "amf1" // Should be listed in yaml config file
 func runScenarioTC1(test *TestScenario) error {
 	var wg sync.WaitGroup
 	var Mu sync.Mutex
-	test.Log.Infoln("Running scenario %s: %s", test.Id, test.Description)
+	test.Log.Infoln("Running scenario ", test.Id, " : ", test.Description)
 	test.Status = SCENARIO_FAILED
 
 	ueProfile, err := factory.AppConfig.Configuration.GetUeProfile(UE_PROFILE)
 	if err != nil {
-		test.Log.Errorln("%s", err)
+		test.Log.Errorln(err)
 		return err
 	}
 	startImsi, err := strconv.Atoi(ueProfile.StartImsi)
 	if err != nil {
-		err = fmt.Errorf("invalid imsi value:%v", ueProfile.StartImsi)
-		test.Log.Errorln("%s", err)
+		err = fmt.Errorf("invalid imsi value: %v", ueProfile.StartImsi)
+		test.Log.Errorln(err)
 		return err
 	}
 
 	gnb, err := factory.AppConfig.Configuration.GetGNodeB(FIRST_GNB)
 	if err != nil {
 		err = fmt.Errorf("Failed to fetch gNB context: %v", err)
-		test.Log.Errorln("%s", err)
+		test.Log.Errorln(err)
 		return err
 	}
 
@@ -42,7 +42,7 @@ func runScenarioTC1(test *TestScenario) error {
 	err = PerformNgapSetupProcedure(test, FIRST_GNB, FIRST_AMF)
 	if err != nil {
 		err = fmt.Errorf("Failed to Perform NGAP Setup Procedure: %v", err)
-		test.Log.Errorln("%s", err)
+		test.Log.Errorln(err)
 		return err
 	}
 

@@ -216,7 +216,7 @@ func PerformNgapSetupProcedure(test *TestScenario, gnbName string, amfName strin
 			// It is important to do this lookup just in time, not at simulation startup
 			addrs, err := net.LookupHost(amf.AmfHostName)
 			if err != nil {
-				return fmt.Errorf("failed to resolve amf host name: %v, err: %v", amf.AmfHostName, err)
+				return fmt.Errorf("failed to resolve amf host name: %v, err: %s", amf.AmfHostName, err)
 			}
 			gnbCtx.Amf = gnbctx.NewGnbAmf(addrs[0], gnbctx.NGAP_SCTP_PORT)
 		}
