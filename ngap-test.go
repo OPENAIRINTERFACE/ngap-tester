@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/omec-project/gnbsim/factory"
 	"github.com/openairinterface/ngap-tester/testscenario"
 	"github.com/urfave/cli"
 )
@@ -72,6 +73,19 @@ func run_tests(c *cli.Context) error {
 		return err
 	}
 	testArray := testscenario.CreateTestSuite(c)
+
+	cfg := c.String("cfg")
+	if cfg == "" {
+		log.Printf("No configuration file provided. Using default configuration file:", factory.GNBSIM_DEFAULT_CONFIG_PATH)
+		log.Printf("Application Usage:", c.App.Usage)
+		cfg = factory.GNBSIM_DEFAULT_CONFIG_PATH
+	}
+
+	if err := factory.InitConfigFactory(cfg); err != nil {
+		log.Printf("Failed to initialize config factory:", err)
+		return err
+	}
+
 	err = testscenario.RunTestsuite(testArray)
 	if err != nil {
 		return err
@@ -95,6 +109,7 @@ func check_flags(c *cli.Context) error {
 	run_random := c.Bool("random")
 	testFile := c.String("test-file")
 	testName := c.String("one-test")
+	testConfig := c.String("config")
 
 	// Global Options are exclusive.
 	var nbOptions uint8 = 0
@@ -108,6 +123,12 @@ func check_flags(c *cli.Context) error {
 		nbOptions++
 		if _, err := os.Stat(testFile); errors.Is(err, os.ErrNotExist) {
 			return cli.NewExitError("The test file does not exist", 5)
+		}
+	}
+	if testConfig != "" {
+		nbOptions++
+		if _, err := os.Stat(testConfig); errors.Is(err, os.ErrNotExist) {
+			return cli.NewExitError("The config file does not exist", 5)
 		}
 	}
 	if testName != "" {
@@ -135,6 +156,10 @@ func getCliFlags() []cli.Flag {
 		cli.StringFlag{
 			Name:  "test-file, tf",
 			Usage: "`TEST-FILE` that contains list of test(s) to run",
+		},
+		cli.StringFlag{
+			Name:  "cfg-file, cf",
+			Usage: "`CONFIG-FILE` that contains configuration of test(s) to run",
 		},
 		cli.StringFlag{
 			Name:  "one-test, o",
