@@ -31,9 +31,9 @@ const (
 )
 
 type ScenarioUeContext struct {
-	TrigEventsChan chan *common.ProfileMessage  // Receiving Events from the REST interface
-	WriteSimChan   chan common.InterfaceMessage // Sending events to SIMUE -  start proc and proc parameters
-	ReadChan       chan *common.ProfileMessage  // simUe to profile ?
+	TrigEventsChan chan *common.InterfaceMessage // Receiving Events from the REST interface
+	WriteSimChan   chan common.InterfaceMessage  // Sending events to SIMUE -  start proc and proc parameters
+	ReadChan       chan *common.InterfaceMessage // simUe to profile ?
 
 	/* logger */
 	Log *logrus.Entry
@@ -238,24 +238,24 @@ func PerformNgapSetupProcedure(test *TestScenario, gnbName string, amfName strin
 }
 
 func (scnr *TestScenario) InitImsi(gnb *context.GNodeB, imsiStr string) {
-	readChan := make(chan *common.ProfileMessage)
-	c := simue.InitUE(imsiStr, gnb, scnr, readChan)
-	scenarioUeContext := ScenarioUeContext{WriteSimChan: c}
+	readChan := make(chan *common.InterfaceMessage)
+	simUe := simue.InitUE(imsiStr, "default", gnb, readChan)
+	scenarioUeContext := ScenarioUeContext{WriteSimChan: simUe.ReadChan}
 	scenarioUeContext.ReadChan = readChan
-	trigChan := make(chan *common.ProfileMessage)
+	trigChan := make(chan *common.InterfaceMessage)
 	scenarioUeContext.TrigEventsChan = trigChan
 	scenarioUeContext.Log = logger.ScnrUeCtxLog.WithField(logger.FieldSupi, imsiStr)
 	scnr.SimUe[imsiStr] = &scenarioUeContext
 }
 
-func (scnr *TestScenario) SendEventToSimUe(imsiStr string, event EventType) {
+func (scnr *TestScenario) SendEventToSimUe(imsiStr string, event common.EventType) {
 	msg := &common.UeMessage{}
 	msg.Event = event
 	scnr.SimUe[imsiStr].WriteSimChan <- msg
 }
 
 func (scnr *TestScenario) SendUserDataPacket(imsiStr string) {
-	ue.Log.Infoln("Initiating User Data Packet Generation Procedure")
+	scnr.Log.Infoln("Initiating User Data Packet Generation Procedure")
 	msg := &common.UeMessage{}
 	// TODO
 	msg.UserDataPktCount = 10
