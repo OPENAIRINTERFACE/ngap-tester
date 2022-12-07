@@ -16,6 +16,7 @@ The image tags used are:
 * `5gc-gnbsim:0.0.1-dev`
 
 There are plenty of material to retrieve the images from Docker-Hub and retag them.
+See [this page](https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-fed/-/blob/master/docs/RETRIEVE_OFFICIAL_IMAGES.md).
 
 For the `omec-gnbsim`, you can also build it yourself:
 
@@ -49,7 +50,7 @@ flowchart TD;
     upf0(oai-spgwu) <-- N3 --> omec-gnbsim-1[[omec-gnbsim-1/2/3/4]];
 ```
 
-All the interfaces (the ones that are shown and the invisible ones) are all on the same docker network:
+All the interfaces (the ones that are shown and the unshown ones) are all on the same docker network:
 
 * `demo-oai-public-net`
 
@@ -57,7 +58,7 @@ The following commands are based on the GitHub Action workflow :
 
 * `.github/workflows/build_legacy_gnbsim.yml` --> job: `sanity-test-legacy-x64`
 
-You may need to install `matplotlib`: `pip3 install matplotlib`
+You shall install `matplotlib`: `pip3 install matplotlib`
 
 ### Increase the database with thousands of UEs
 
@@ -99,7 +100,12 @@ By default, the `scripts/insert-ues-to-sql-database.awk` adds `4000` subscribers
 
 Each gnbsim instance can test up to `1000` UEs. See `omec-gnbsim-config-*.yaml`, profile `profile9-*`
 
---> Currently the `ueCount` is set to `100` --> can be modified up to `1000`.
+| Instance Name | Configuration File        | Profile Name | Starting IMSI   | Current `ueCount` | Maximum `ueCount` |
+| ------------- | ------------------------- | ------------ | --------------- | ----------------- | ----------------- |
+| omec-gnbsim-1 | omec-gnbsim-config-1.yaml | profile9-1   | 208950000000130 | 100               | 1000              |
+| omec-gnbsim-2 | omec-gnbsim-config-2.yaml | profile9-2   | 208950000001130 | 100               | 1000              |
+| omec-gnbsim-3 | omec-gnbsim-config-3.yaml | profile9-3   | 208950000002130 | 100               | 1000              |
+| omec-gnbsim-4 | omec-gnbsim-config-4.yaml | profile9-4   | 208950000003130 | 100               | 1000              |
 
 If you are only deploying `omec-gnbsim-1` you can change the `ueCount` up to `4000`.
 
@@ -153,8 +159,6 @@ The following commands are based on the GitHub Action workflow :
 
 * `.github/workflows/build_legacy_gnbsim.yml` --> job: `sanity-test-legacy-vpp-x64`
 
-You may need to install `matplotlib`: `pip3 install matplotlib`
-
 ### Adapt to VPP the omec-gnbsim files
 
 ```bash
@@ -192,17 +196,11 @@ docker-compose -f docker-compose-omec-gnbsim.yaml up -d
 ./check-omec-gnbsim-status.py --vpp-upf
 ```
 
-By default, the `scripts/insert-ues-to-sql-database.awk` adds `4000` subscribers.
+IMSI management is the same as in the previous deployment.
 
-Each gnbsim instance can test up to `1000` UEs. See `omec-gnbsim-config-*.yaml`, profile `profile9-*`
+The `./check-omec-gnbsim-status.py` script still generates 2 `PNG` figures that profiles the CPU and memory usage of each NF.
 
---> Currently the `ueCount` is set to `100` --> can be modified up to `1000`.
-
-If you are only deploying `omec-gnbsim-1` you can change the `ueCount` up to `4000`.
-
-The `./check-omec-gnbsim-status.py` script will generate 2 `PNG` figures that profiles the CPU and memory usage of each NF.
-
-Note that the VPP-UPF is not profiled. `docker stats` does not report CPU nor memory usage.
+Note that the VPP-UPF is not profiled. `docker stats` does not report CPU nor memory usage for this container.
 
 ### Undeploy RAN emulator(s)
 
