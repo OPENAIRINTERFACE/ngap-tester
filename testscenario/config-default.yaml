@@ -39,11 +39,8 @@ configuration:
                 mcc: 208
                 mnc: 93
               taiSliceSupportList:
-                - sst: 1 # Slice/Service Type (uinteger, range: 0~255)
-                  sd: 010203 # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
                 - sst: 1
-                  sd: 000001
-                - sst: 2
+                  sd: 16777215
   amfs:
     amf1:
       hostName: amf # Host name of AMF
@@ -57,8 +54,8 @@ configuration:
       sequenceNumber: "16f3b3f70fc2"
       dnn: "default"
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>
-        mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
-        mnc: 95 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+        mcc: 001 # Mobile Country Code (3 digits string, digit: 0~9)
+        mnc: 01 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
 
 logger:
-  logLevel: info # how detailed the log will be, values: trace, debug, info, warn, error, fatal, panic
+  logLevel: trace # how detailed the log will be, values: trace, debug, info, warn, error, fatal, panic
