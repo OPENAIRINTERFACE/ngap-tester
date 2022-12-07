@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/omec-project/gnbsim/factory"
+	"github.com/omec-project/gnbsim/logger"
 	"github.com/openairinterface/ngap-tester/testscenario"
 	"github.com/urfave/cli"
 )
@@ -86,6 +87,10 @@ func run_tests(c *cli.Context) error {
 		log.Printf("Failed to initialize config factory:", err)
 		return err
 	}
+
+	lvl := factory.AppConfig.Logger.LogLevel
+	logger.AppLog.Infoln("Setting log level to:", lvl)
+	logger.SetLogLevel(lvl)
 
 	err = testscenario.RunTestsuite(testArray)
 	if err != nil {
