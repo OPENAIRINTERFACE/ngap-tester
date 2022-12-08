@@ -159,7 +159,7 @@ func RunTestsuite(ts []TestScenario) error {
 			}
 		}(&tst)
 
-		if factory.AppConfig.Configuration.ExecUesInParallel == false {
+		if factory.AppConfig.Configuration.ExecScenariosInParallel == false {
 			logger.AppLog.Traceln("Waiting for scenario ", tst.Id, " to continue")
 			wg.Wait()
 		}
