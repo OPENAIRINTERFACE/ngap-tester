@@ -139,7 +139,7 @@ func RunTestsuite(ts []TestScenario) error {
 
 	err := gnodeb.InitializeAllGnbs()
 	if err != nil {
-		logger.AppLog.Errorln("Failed to initialize gNodeBs: %v", err)
+		logger.AppLog.Errorln("Failed to initialize gNodeBs: ", err)
 		return err
 	}
 
@@ -160,7 +160,7 @@ func RunTestsuite(ts []TestScenario) error {
 		}(&tst)
 
 		if factory.AppConfig.Configuration.ExecUesInParallel == false {
-			logger.AppLog.Traceln("Waiting for scenario %s to continue", tst.Id)
+			logger.AppLog.Traceln("Waiting for scenario ", tst.Id, " to continue")
 			wg.Wait()
 		}
 	}
