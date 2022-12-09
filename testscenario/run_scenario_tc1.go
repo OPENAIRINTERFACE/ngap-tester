@@ -5,13 +5,14 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/factory"
+	"github.com/omec-project/gnbsim/realue"
 )
 
 const UE_PROFILE string = "default" // Should be listed in yaml config file
-const NUM_UES int = 2
-const FIRST_GNB string = "gnb1" // Should be listed in yaml config file
-const FIRST_AMF string = "amf1" // Should be listed in yaml config file
+const FIRST_AMF string = "amf1"     // Should be listed in yaml config file
+const FIRST_GNB_POS int = 0         // value is index in sorted list of gnb names
 
 func runScenarioTC1(test *TestScenario) error {
 	var wg sync.WaitGroup
@@ -31,7 +32,7 @@ func runScenarioTC1(test *TestScenario) error {
 		return err
 	}
 
-	gnb, err := factory.AppConfig.Configuration.GetGNodeB(FIRST_GNB)
+	gnb, err := factory.AppConfig.Configuration.GetGNodeBAt(FIRST_GNB_POS)
 	if err != nil {
 		err = fmt.Errorf("Failed to fetch gNB context: %v", err)
 		test.Log.Errorln(err)
@@ -39,7 +40,8 @@ func runScenarioTC1(test *TestScenario) error {
 	}
 
 	// Test scenario
-	err = PerformNgapSetupProcedure(test, FIRST_GNB, FIRST_AMF)
+	// Actually this procedure is synchronous
+	err = PerformNgapSetupProcedure(test, gnb.GnbName, FIRST_AMF)
 	if err != nil {
 		err = fmt.Errorf("Failed to Perform NGAP Setup Procedure: %v", err)
 		test.Log.Errorln(err)
@@ -48,12 +50,12 @@ func runScenarioTC1(test *TestScenario) error {
 
 	// Allocate objects separatly from launch of scenarios
 	// May help reduce delays between start of scenarios in seq or //
-	for count, imsi := 1, startImsi; count <= NUM_UES; count, imsi = count+1, imsi+1 {
+	for count, imsi := 1, startImsi; count <= factory.AppConfig.Configuration.NumUes; count, imsi = count+1, imsi+1 {
 		imsiStr := "imsi-" + strconv.Itoa(imsi)
 		test.InitImsi(gnb, imsiStr)
 	}
 
-	for count, imsi := 1, startImsi; count <= NUM_UES; count, imsi = count+1, imsi+1 {
+	for count, imsi := 1, startImsi; count <= factory.AppConfig.Configuration.NumUes; count, imsi = count+1, imsi+1 {
 		imsiStr := "imsi-" + strconv.Itoa(imsi)
 		wg.Add(1)
 		scnUeCtx := test.SimUe[imsiStr]
@@ -72,12 +74,12 @@ func runScenarioTC1(test *TestScenario) error {
 		}(scnUeCtx)
 
 		if factory.AppConfig.Configuration.ExecUesInParallel == false {
-			test.Log.Traceln("Waiting for UE %s to continue...", imsiStr)
+			test.Log.Traceln("Waiting for UE ", imsiStr, " to continue...")
 			wg.Wait()
 		}
 	}
 	if factory.AppConfig.Configuration.ExecUesInParallel == true {
-		test.Log.Infoln("Waiting for for all UEs to finish processing...")
+		test.Log.Infoln("Waiting for all UEs to finish processing...")
 		wg.Wait()
 	}
 	test.Log.Infoln("Scenario ended")
@@ -88,7 +90,16 @@ func runScenarioTC1(test *TestScenario) error {
 func (scn *TestScenario) runScenarioTC1Ue(scnrUeCtx *ScenarioUeContext, imsiStr string) error {
 
 	scn.Log.Traceln("runScenarioTC1Ue started ")
+	nasPdu, err := realue.HandleRegRequestEvent(scnrUeCtx.SimUe.RealUe, nil)
+	if err != nil {
+		return err
+	}
+	msg := realue.FormUuMessage(common.N1_SEND_SDU_EVENT+common.NAS_5GMM_REGISTRATION_REQUEST, nasPdu)
+	msg.Tac = scnrUeCtx.SimUe.GnB.SupportedTaList[0].Tac
+	msg.NrCgi = scnrUeCtx.SimUe.GnB.NrCgiCellList[0]
+	scnrUeCtx.SendToGnbUe(msg)
 
+	scnrUeCtx.HandleEvents()
 	scn.Log.Traceln("runScenarioTC1Ue ended")
 	return nil
 }

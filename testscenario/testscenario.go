@@ -17,6 +17,7 @@ import (
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	"github.com/omec-project/gnbsim/logger"
 	"github.com/omec-project/gnbsim/simue"
+	simuectx "github.com/omec-project/gnbsim/simue/context"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
@@ -34,6 +35,10 @@ type ScenarioUeContext struct {
 	TrigEventsChan chan *common.InterfaceMessage // Receiving Events from the REST interface
 	WriteSimChan   chan common.InterfaceMessage  // Sending events to SIMUE -  start proc and proc parameters
 	ReadChan       chan *common.InterfaceMessage // simUe to profile ?
+	WriteGnbUeChan chan common.InterfaceMessage  // Sending events to gnb
+
+	SimUe      *simuectx.SimUe
+	CurrentGnb *gnbctx.GNodeB
 
 	/* logger */
 	Log *logrus.Entry
@@ -245,6 +250,8 @@ func (scnr *TestScenario) InitImsi(gnb *context.GNodeB, imsiStr string) {
 	trigChan := make(chan *common.InterfaceMessage)
 	scenarioUeContext.TrigEventsChan = trigChan
 	scenarioUeContext.Log = logger.ScnrUeCtxLog.WithField(logger.FieldSupi, imsiStr)
+	scenarioUeContext.SimUe = simUe
+	scenarioUeContext.WriteGnbUeChan = simUe.WriteGnbUeChan
 	scnr.SimUe[imsiStr] = &scenarioUeContext
 }
 
@@ -270,4 +277,18 @@ func (scnr *TestScenario) SendUserDataPacket(imsiStr string) {
 	//time.Sleep(3 * time.Second)
 
 	scnr.SimUe[imsiStr].WriteSimChan <- msg
+}
+
+func (scnr_ue *ScenarioUeContext) SendToGnbUe(msg common.InterfaceMessage) {
+	scnr_ue.Log.Traceln("Sending", msg.GetEventType(), "to GnbUe")
+	scnr_ue.WriteGnbUeChan <- msg
+}
+
+func (scnr_ue *ScenarioUeContext) HandleEvents() {
+	for msg := range scnr_ue.ReadChan {
+		event := (*msg).GetEventType()
+		scnr_ue.Log.Infoln("Handling event:", event)
+
+	}
+	return
 }
