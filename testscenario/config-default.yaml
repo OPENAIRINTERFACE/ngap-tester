@@ -59,10 +59,10 @@ configuration:
       hostName: amf # Host name of AMF
       ipAddr: # AMF IP address
       port: 38412 # AMF port
-  numUes: 1
   ueProfiles: # profile information
     default: # uniquely identifies a profile within application
       startImsi: 001010000000001
+      numUes: 1
       opc: "63bfa50ee6523365ff14c1f45f88737d"
       key: "0C0A34601D4F07677303652C0462535B"
       sequenceNumber: "16f3b3f70fc2"
@@ -70,6 +70,30 @@ configuration:
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>
         mcc: 001 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 01 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
-
+      provision:
+        createSubscriber: yes
+        createRestUrl: http://192.168.70.136/nudr-dr/v1/subscription-data/SUBSCRIBER-SUPI/authentication-data/authentication-subscription
+        deleteRestUrl: http://192.168.70.136/nudr-dr/v1/subscription-data/SUBSCRIBER-SUPI/authentication-data/authentication-subscription
+        createJsonContent: |
+          {
+            "authenticationMethod":"5G_AKA",
+            "encPermanentKey":"0C0A34601D4F07677303652C0462535B",
+            "protectionParameterId":"0C0A34601D4F07677303652C0462535B",
+            "sequenceNumber": {
+                "sqn" : "000000000020", 
+                "sqnScheme": "NON_TIME_BASED", 
+                "lastIndexes": {
+                    "ausf": 0 
+                    }
+                },
+            "authenticationManagementField":"8000",
+            "algorithmId":"milenage",
+            "encOpcKey":"63bfa50ee6523365ff14c1f45f88737d",
+            "encTopcKey":"63bfa50ee6523365ff14c1f45f88737d", 
+            "vectorGenerationInHss": false, 
+            "n5gcAuthMethod": "", 
+            "rgAuthenticationInd": false, 
+            "supi":"SUBSCRIBER-SUPI"
+          }
 logger:
   logLevel: trace # how detailed the log will be, values: trace, debug, info, warn, error, fatal, panic

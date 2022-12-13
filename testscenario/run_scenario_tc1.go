@@ -2,6 +2,7 @@ package testscenario
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"sync"
 
@@ -19,18 +20,6 @@ func runScenarioTC1(test *TestScenario) error {
 	var Mu sync.Mutex
 	test.Log.Infoln("Running scenario ", test.Id, " : ", test.Description)
 	test.Status = SCENARIO_FAILED
-
-	ueProfile, err := factory.AppConfig.Configuration.GetUeProfile(UE_PROFILE)
-	if err != nil {
-		test.Log.Errorln(err)
-		return err
-	}
-	startImsi, err := strconv.Atoi(ueProfile.StartImsi)
-	if err != nil {
-		err = fmt.Errorf("invalid imsi value: %v", ueProfile.StartImsi)
-		test.Log.Errorln(err)
-		return err
-	}
 
 	gnb, err := factory.AppConfig.Configuration.GetGNodeBAt(FIRST_GNB_POS)
 	if err != nil {
@@ -50,13 +39,33 @@ func runScenarioTC1(test *TestScenario) error {
 
 	// Allocate objects separatly from launch of scenarios
 	// May help reduce delays between start of scenarios in seq or //
-	for count, imsi := 1, startImsi; count <= factory.AppConfig.Configuration.NumUes; count, imsi = count+1, imsi+1 {
-		imsiStr := "imsi-" + strconv.Itoa(imsi)
-		test.InitImsi(gnb, imsiStr)
+	keysUeProf := make([]string, 0, len(factory.AppConfig.Configuration.UeProfiles))
+	for k := range factory.AppConfig.Configuration.UeProfiles {
+		test.Log.Traceln("key UE profile ", k)
+		keysUeProf = append(keysUeProf, k)
+	}
+	sort.Strings(keysUeProf)
+	for k := 0; k < len(keysUeProf); k = k + 1 {
+		ueProfile := factory.AppConfig.Configuration.UeProfiles[keysUeProf[k]]
+		startImsi, err := strconv.Atoi(ueProfile.StartImsi)
+		if err != nil {
+			err = fmt.Errorf("invalid imsi value: %v", ueProfile.StartImsi)
+			test.Log.Errorln(err)
+			return err
+		}
+		for count, imsi := 1, startImsi; count <= ueProfile.NumUes; count, imsi = count+1, imsi+1 {
+			imsiStr := "imsi-" + strconv.Itoa(imsi)
+			test.InitImsi(gnb, imsiStr, keysUeProf[k])
+			test.Log.Traceln("provision UE ", imsiStr)
+		}
 	}
 
-	for count, imsi := 1, startImsi; count <= factory.AppConfig.Configuration.NumUes; count, imsi = count+1, imsi+1 {
-		imsiStr := "imsi-" + strconv.Itoa(imsi)
+	keysImsi := make([]string, 0, len(test.SimUe))
+	for k := range test.SimUe {
+		keysImsi = append(keysImsi, k)
+	}
+	for i := 0; i < len(keysImsi); i = i + 1 {
+		imsiStr := keysImsi[i]
 		wg.Add(1)
 		scnUeCtx := test.SimUe[imsiStr]
 		go func(scnrUeCtx *ScenarioUeContext) {

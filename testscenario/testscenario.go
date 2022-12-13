@@ -2,11 +2,17 @@ package testscenario
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
 	"net"
+	"net/http"
 	"os"
+	"sort"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -151,6 +157,13 @@ func RunTestsuite(ts []TestScenario) error {
 	var status bool = true
 
 	for i, tst := range ts {
+
+		err := tst.ProvisionUes()
+		if err != nil {
+			tst.Log.Errorln("Failed to provision Ues: ", err)
+			return err
+		}
+
 		wg.Add(1)
 		go func(scn *TestScenario) {
 			defer wg.Done()
@@ -242,9 +255,102 @@ func PerformNgapSetupProcedure(test *TestScenario, gnbName string, amfName strin
 	return err
 }
 
-func (scnr *TestScenario) InitImsi(gnb *context.GNodeB, imsiStr string) {
+func (test *TestScenario) ProvisionUes() error {
+	// Allocate objects separatly from launch of scenarios
+	// May help reduce delays between start of scenarios in seq or //
+	keysUeProf := make([]string, 0, len(factory.AppConfig.Configuration.UeProfiles))
+	for k := range factory.AppConfig.Configuration.UeProfiles {
+		keysUeProf = append(keysUeProf, k)
+	}
+	sort.Strings(keysUeProf)
+
+	client := &http.Client{}
+
+	for k := 0; k < len(keysUeProf); k = k + 1 {
+		ueProfile := factory.AppConfig.Configuration.UeProfiles[keysUeProf[k]]
+		if ueProfile.Provision.CreateSubscriber {
+			test.Log.Infoln("Provisioning ", ueProfile.NumUes, " subscribers for ", keysUeProf[k], " UE profile...")
+			// Unmarshall JSON like string from config file into GO struct
+			jBlob := []byte(ueProfile.Provision.CreateJsonContent)
+			var subscriberProvision simuectx.SubscriberProvision
+			err := json.Unmarshal(jBlob, &subscriberProvision)
+			if err != nil {
+				test.Log.Errorln("ProvisionUes failed to handle JSON content:", err)
+				return err
+			}
+			startImsi, err := strconv.Atoi(ueProfile.StartImsi)
+			if err != nil {
+				err = fmt.Errorf("invalid imsi value: %v", ueProfile.StartImsi)
+				test.Log.Errorln(err)
+				return err
+			}
+			for count, imsi := 1, startImsi; count <= ueProfile.NumUes; count, imsi = count+1, imsi+1 {
+				imsiStr := "imsi-" + strconv.Itoa(imsi)
+				err = test.ProvisionWithJson(imsiStr, ueProfile.Provision.CreateRestUrl, ueProfile.Provision.DeleteRestUrl, &subscriberProvision, client)
+				if err != nil {
+					test.Log.Errorln("Failed to provision subscriber ", imsiStr, ": ", err)
+					return err
+				}
+				test.Log.Traceln("Provisioned subscriber ", imsiStr)
+			}
+			test.Log.Infoln("Provisioning ", ueProfile.NumUes, " subscribers for ", keysUeProf[k], " UE profile, done")
+
+		}
+	}
+	return nil
+}
+
+// TODO may be moved at the rigth place when several UE profiles will be implemented
+func (test *TestScenario) ProvisionWithJson(imsiStr string, createRestUrl string, deleteRestUrl string, provision *simuectx.SubscriberProvision, httpClient *http.Client) error {
+
+	provision.Supi = imsiStr
+	createRestUrl = strings.Replace(createRestUrl, "SUBSCRIBER-SUPI", imsiStr, -1)
+	deleteRestUrl = strings.Replace(deleteRestUrl, "SUBSCRIBER-SUPI", imsiStr, -1)
+	payload, err := json.Marshal(provision)
+	if err != nil {
+		return err
+	}
+
+	request, err := http.NewRequest(http.MethodDelete, deleteRestUrl, nil)
+	if err != nil {
+		return err
+	}
+	request.Header.Set("Content-Type", "application/json; charset=utf-8")
+
+	response, err := httpClient.Do(request)
+	if err != nil {
+		return err
+	}
+
+	if response.StatusCode != http.StatusNoContent && response.StatusCode != http.StatusOK {
+		err = fmt.Errorf("Non-Deleted HTTP status: %v", response.StatusCode)
+		return err
+	}
+	response.Body.Close()
+
+	request, err = http.NewRequest(http.MethodPut, createRestUrl, bytes.NewBuffer(payload))
+	if err != nil {
+		return err
+	}
+	request.Header.Set("Content-Type", "application/json; charset=utf-8")
+
+	response, err = httpClient.Do(request)
+	if err != nil {
+		return err
+	}
+
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusCreated {
+		err = fmt.Errorf("Non-Created HTTP status: %v", response.StatusCode)
+		return err
+	}
+	return nil
+}
+
+func (scnr *TestScenario) InitImsi(gnb *context.GNodeB, imsiStr string, ueModel string) error {
 	readChan := make(chan *common.InterfaceMessage)
-	simUe := simue.InitUE(imsiStr, "default", gnb, readChan)
+	simUe := simue.InitUE(imsiStr, ueModel, gnb, readChan)
 	scenarioUeContext := ScenarioUeContext{WriteSimChan: simUe.ReadChan}
 	scenarioUeContext.ReadChan = readChan
 	trigChan := make(chan *common.InterfaceMessage)
@@ -253,6 +359,7 @@ func (scnr *TestScenario) InitImsi(gnb *context.GNodeB, imsiStr string) {
 	scenarioUeContext.SimUe = simUe
 	scenarioUeContext.WriteGnbUeChan = simUe.WriteGnbUeChan
 	scnr.SimUe[imsiStr] = &scenarioUeContext
+	return nil
 }
 
 func (scnr *TestScenario) SendEventToSimUe(imsiStr string, event common.EventType) {
