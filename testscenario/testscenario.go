@@ -322,7 +322,7 @@ func (test *TestScenario) ProvisionWithJson(imsiStr string, createRestUrl string
 		return err
 	}
 
-	if response.StatusCode != http.StatusNoContent && response.StatusCode != http.StatusOK {
+	if response.StatusCode != http.StatusNoContent && response.StatusCode != http.StatusAccepted {
 		err = fmt.Errorf("Non-Deleted HTTP status: %v", response.StatusCode)
 		return err
 	}
