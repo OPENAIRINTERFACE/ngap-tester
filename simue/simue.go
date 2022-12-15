@@ -1,0 +1,53 @@
+// SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
+//
+// SPDX-License-Identifier: Apache-2.0
+
+package simue
+
+import (
+	"fmt"
+
+	"github.com/omec-project/gnbsim/common"
+	"github.com/omec-project/gnbsim/gnodeb"
+	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
+	"github.com/omec-project/gnbsim/realue"
+	simuectx "github.com/openairinterface/ngaptester/simue/context"
+)
+
+func InitUE(imsiStr string, ueModel string, gnb *gnbctx.GNodeB, result chan *common.InterfaceMessage) *simuectx.SimUe {
+	simUe := simuectx.NewSimUe(imsiStr, ueModel, gnb, result)
+	Init(simUe) // Initialize simUE, realUE & wait for events
+	return simUe
+}
+
+func Init(simUe *simuectx.SimUe) error {
+
+	err := ConnectToGnb(simUe)
+	if err != nil {
+		err = fmt.Errorf("Failed to connect to gnodeb: %v!", err)
+		return err
+	}
+
+	err = realue.Init(simUe.RealUe)
+	return err
+}
+
+func ConnectToGnb(simUe *simuectx.SimUe) error {
+	uemsg := common.UuMessage{}
+	uemsg.Event = common.CONNECTION_REQUEST_EVENT
+	uemsg.CommChan = simUe.ReadChan
+	uemsg.Supi = simUe.Supi
+
+	var err error
+	gNb := simUe.GnB
+	simUe.WriteGnbUeChan, err = gnodeb.RequestConnection(gNb, &uemsg)
+	if err != nil {
+		simUe.Log.Infof("ERROR -- connecting to gNodeB, Name:%v, IP:%v, Port:%v", gNb.GnbName,
+			gNb.GnbN2Ip, gNb.GnbN2Port)
+		return err
+	}
+
+	simUe.Log.Infof("Connected to gNodeB, Name:%v, IP:%v, Port:%v", gNb.GnbName,
+		gNb.GnbN2Ip, gNb.GnbN2Port)
+	return nil
+}
