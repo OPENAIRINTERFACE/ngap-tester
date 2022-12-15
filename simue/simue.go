@@ -11,11 +11,11 @@ import (
 	"github.com/omec-project/gnbsim/gnodeb"
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	"github.com/omec-project/gnbsim/realue"
-	simuectx "github.com/openairinterface/ngaptester/simue/context"
+	simuectx "github.com/openairinterface/ngap-tester/simue/context"
 )
 
-func InitUE(imsiStr string, ueModel string, gnb *gnbctx.GNodeB, result chan *common.InterfaceMessage) *simuectx.SimUe {
-	simUe := simuectx.NewSimUe(imsiStr, ueModel, gnb, result)
+func InitUE(imsiStr string, ueModel string, gnb *gnbctx.GNodeB) *simuectx.SimUe {
+	simUe := simuectx.NewSimUe(imsiStr, ueModel, gnb)
 	Init(simUe) // Initialize simUE, realUE & wait for events
 	return simUe
 }
@@ -50,4 +50,9 @@ func ConnectToGnb(simUe *simuectx.SimUe) error {
 	simUe.Log.Infof("Connected to gNodeB, Name:%v, IP:%v, Port:%v", gNb.GnbName,
 		gNb.GnbN2Ip, gNb.GnbN2Port)
 	return nil
+}
+
+func SendToGnbUe(simUe *simuectx.SimUe, msg common.InterfaceMessage) {
+	simUe.Log.Traceln("Sending", msg.GetEventType(), "to GnbUe")
+	simUe.WriteGnbUeChan <- msg
 }

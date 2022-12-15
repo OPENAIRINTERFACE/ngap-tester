@@ -22,8 +22,8 @@ import (
 	"github.com/omec-project/gnbsim/gnodeb/context"
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	"github.com/omec-project/gnbsim/logger"
-	"github.com/omec-project/gnbsim/simue"
-	simuectx "github.com/omec-project/gnbsim/simue/context"
+	"github.com/openairinterface/ngap-tester/simue"
+	simuectx "github.com/openairinterface/ngap-tester/simue/context"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
@@ -37,19 +37,6 @@ const (
 	SCENARIO_UNDEFINED StatusType = 3
 )
 
-type ScenarioUeContext struct {
-	TrigEventsChan chan *common.InterfaceMessage // Receiving Events from the REST interface
-	WriteSimChan   chan common.InterfaceMessage  // Sending events to SIMUE -  start proc and proc parameters
-	ReadChan       chan *common.InterfaceMessage // simUe to profile ?
-	WriteGnbUeChan chan common.InterfaceMessage  // Sending events to gnb
-
-	SimUe      *simuectx.SimUe
-	CurrentGnb *gnbctx.GNodeB
-
-	/* logger */
-	Log *logrus.Entry
-}
-
 type TestScenario struct {
 	Id            string
 	Description   string
@@ -57,8 +44,10 @@ type TestScenario struct {
 	Action        func(test *TestScenario) error
 	UePassedCount uint
 	UeFailedCount uint
-	SimUe         map[string]*ScenarioUeContext
+	SimUe         map[string]*simuectx.SimUe
 	ErrorList     []error
+
+	ReadChan chan common.InterfaceMessage // gnb AMF to Scenario
 
 	/* logger */
 	Log *logrus.Entry
@@ -111,7 +100,8 @@ func CreateTestSuite(c *cli.Context) []TestScenario {
 			Description: "UE Initiated Registration Procedures - SUCIas id (UE and AMF Interactions- NAS) - Single gNB",
 			Status:      SCENARIO_NOT_RUN,
 			Action:      runScenarioTC1,
-			SimUe:       make(map[string]*ScenarioUeContext),
+			ReadChan:    make(chan common.InterfaceMessage, 9),
+			SimUe:       make(map[string]*simuectx.SimUe),
 			Log:         logger.ScenarioLog.WithField(logger.FieldScenario, testTestName),
 		}
 		testSuite = append(testSuite, scenario)
@@ -123,7 +113,8 @@ func CreateTestSuite(c *cli.Context) []TestScenario {
 			Description: "Loop SUCI Registration with Single UE",
 			Status:      SCENARIO_NOT_RUN,
 			Action:      runScenarioTC1a,
-			SimUe:       make(map[string]*ScenarioUeContext),
+			ReadChan:    make(chan common.InterfaceMessage, 9),
+			SimUe:       make(map[string]*simuectx.SimUe),
 			Log:         logger.ScenarioLog.WithField(logger.FieldScenario, testTestName),
 		}
 		testSuite = append(testSuite, scenario)
@@ -159,6 +150,7 @@ func RunTestsuite(ts []TestScenario) error {
 	for i, tst := range ts {
 
 		err := tst.ProvisionUes()
+
 		if err != nil {
 			tst.Log.Errorln("Failed to provision Ues: ", err)
 			return err
@@ -215,44 +207,75 @@ func DisplayTestsuiteResults(ts []TestScenario) {
 	}
 }
 
-func PerformNgapSetupProcedure(test *TestScenario, gnbName string, amfName string) error {
+func PerformNgapSetupProcedure(test *TestScenario, gnbName string, amfName string) (common.InterfaceMessage, error) {
 	var err error
 
 	gnbCtx, err := factory.AppConfig.Configuration.GetGNodeB(gnbName)
 	if err != nil {
 		test.Log.Errorln("GetGNodeB returned:", err)
-		return err
+		return nil, err
 	}
 
 	if gnbCtx.Amf == nil {
 		amf, err := factory.AppConfig.Configuration.GetAmf(amfName)
 		if err != nil {
 			test.Log.Errorln("GetAmf returned:", err)
-			return err
+			return nil, err
 		}
 		if amf.AmfIp == "" {
 			// It is important to do this lookup just in time, not at simulation startup
 			addrs, err := net.LookupHost(amf.AmfHostName)
 			if err != nil {
-				return fmt.Errorf("failed to resolve amf host name: %v, err: %s", amf.AmfHostName, err)
+				return nil, fmt.Errorf("failed to resolve amf host name: %v, err: %s", amf.AmfHostName, err)
 			}
-			gnbCtx.Amf = gnbctx.NewGnbAmf(addrs[0], gnbctx.NGAP_SCTP_PORT)
+			gnbCtx.Amf = gnbctx.NewGnbAmf(addrs[0], gnbctx.NGAP_SCTP_PORT, test.ReadChan)
 		}
 	}
 
 	err = gnbCtx.CpTransport.ConnectToPeer(gnbCtx.Amf)
 	if err != nil {
 		test.Log.Errorln("ConnectToAmf returned:", err)
-		return err
+		return nil, err
 	}
 
-	successFulOutcome, err := gnodeb.PerformNgSetup(gnbCtx, gnbCtx.Amf)
+	err = gnodeb.SendNgSetup(gnbCtx, gnbCtx.Amf)
 	if err != nil {
-		test.Log.Errorln("PerformNGSetup returned:", err)
-	} else if !successFulOutcome {
-		err = fmt.Errorf("Result: FAIL, Expected SuccessfulOutcome, received UnsuccessfulOutcome")
+		test.Log.Errorln("SendNgSetup returned:", err)
+		return nil, err
 	}
-	return err
+
+	msg, ok := test.RcvTimedSecondEvent(3)
+	if !ok {
+		err = fmt.Errorf("Response to NGSetup-Request to %v timed-out!", amfName)
+	}
+
+	// LG TODO check NGAPSetupResponse vs NGAPSetupFailure here ?
+	return msg, err
+}
+
+func (test *TestScenario) AllocateSimUes(gnb *context.GNodeB) error {
+
+	keysUeProf := make([]string, 0, len(factory.AppConfig.Configuration.UeProfiles))
+	for k := range factory.AppConfig.Configuration.UeProfiles {
+		test.Log.Traceln("key UE profile ", k)
+		keysUeProf = append(keysUeProf, k)
+	}
+	sort.Strings(keysUeProf)
+	for k := 0; k < len(keysUeProf); k = k + 1 {
+		ueProfile := factory.AppConfig.Configuration.UeProfiles[keysUeProf[k]]
+		startImsi, err := strconv.Atoi(ueProfile.StartImsi)
+		if err != nil {
+			err = fmt.Errorf("invalid imsi value: %v", ueProfile.StartImsi)
+			test.Log.Errorln(err)
+			return err
+		}
+		for count, imsi := 1, startImsi; count <= ueProfile.NumUes; count, imsi = count+1, imsi+1 {
+			imsiStr := "imsi-" + strconv.Itoa(imsi)
+			test.InitImsi(gnb, imsiStr, keysUeProf[k])
+			test.Log.Traceln("provision UE ", imsiStr)
+		}
+	}
+	return nil
 }
 
 func (test *TestScenario) ProvisionUes() error {
@@ -349,53 +372,38 @@ func (test *TestScenario) ProvisionWithJson(imsiStr string, createRestUrl string
 }
 
 func (scnr *TestScenario) InitImsi(gnb *context.GNodeB, imsiStr string, ueModel string) error {
-	readChan := make(chan *common.InterfaceMessage)
-	simUe := simue.InitUE(imsiStr, ueModel, gnb, readChan)
-	scenarioUeContext := ScenarioUeContext{WriteSimChan: simUe.ReadChan}
-	scenarioUeContext.ReadChan = readChan
-	trigChan := make(chan *common.InterfaceMessage)
-	scenarioUeContext.TrigEventsChan = trigChan
-	scenarioUeContext.Log = logger.ScnrUeCtxLog.WithField(logger.FieldSupi, imsiStr)
-	scenarioUeContext.SimUe = simUe
-	scenarioUeContext.WriteGnbUeChan = simUe.WriteGnbUeChan
-	scnr.SimUe[imsiStr] = &scenarioUeContext
+	simUe := simue.InitUE(imsiStr, ueModel, gnb)
+	scnr.SimUe[imsiStr] = simUe
 	return nil
+}
+
+func (scnr *TestScenario) RcvTimedMilliSecondEvent(timeOutMilliSeconds int) (common.InterfaceMessage, bool) {
+	select {
+	case msg, ok := <-scnr.ReadChan:
+		return msg, ok
+
+	case <-time.After(time.Duration(timeOutMilliSeconds) * time.Millisecond):
+		return nil, false
+	}
+}
+
+func (scnr *TestScenario) RcvTimedSecondEvent(timeOutSeconds int) (common.InterfaceMessage, bool) {
+	select {
+	case msg, ok := <-scnr.ReadChan:
+		return msg, ok
+
+	case <-time.After(time.Duration(timeOutSeconds) * time.Second):
+		return nil, false
+	}
+}
+
+func (scnr *TestScenario) RcvEvent() (common.InterfaceMessage, bool) {
+	msg, ok := <-scnr.ReadChan
+	return msg, ok
 }
 
 func (scnr *TestScenario) SendEventToSimUe(imsiStr string, event common.EventType) {
 	msg := &common.UeMessage{}
 	msg.Event = event
-	scnr.SimUe[imsiStr].WriteSimChan <- msg
-}
-
-func (scnr *TestScenario) SendUserDataPacket(imsiStr string) {
-	scnr.Log.Infoln("Initiating User Data Packet Generation Procedure")
-	msg := &common.UeMessage{}
-	// TODO
-	msg.UserDataPktCount = 10
-	// TODO msg.DefaultAs = ue.ProfileCtx.DefaultAs
-	msg.Event = common.DATA_PKT_GEN_REQUEST_EVENT
-
-	/* TODO: Solve timing issue. Currently UE may start sending user data
-	 * before gnb has successfuly sent PDU Session Resource Setup Response
-	 * or before 5g core has processed it
-	 */
-	//ue.Log.Infoln("Please wait, initiating uplink user data in 3 seconds ...")
-	//time.Sleep(3 * time.Second)
-
-	scnr.SimUe[imsiStr].WriteSimChan <- msg
-}
-
-func (scnr_ue *ScenarioUeContext) SendToGnbUe(msg common.InterfaceMessage) {
-	scnr_ue.Log.Traceln("Sending", msg.GetEventType(), "to GnbUe")
-	scnr_ue.WriteGnbUeChan <- msg
-}
-
-func (scnr_ue *ScenarioUeContext) HandleEvents() {
-	for msg := range scnr_ue.ReadChan {
-		event := (*msg).GetEventType()
-		scnr_ue.Log.Infoln("Handling event:", event)
-
-	}
-	return
+	scnr.SimUe[imsiStr].ReadChan <- msg
 }

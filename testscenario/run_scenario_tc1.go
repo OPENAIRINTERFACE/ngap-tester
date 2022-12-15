@@ -2,13 +2,11 @@ package testscenario
 
 import (
 	"fmt"
-	"sort"
-	"strconv"
 	"sync"
 
-	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/factory"
-	"github.com/omec-project/gnbsim/realue"
+	"github.com/openairinterface/ngap-tester/simue"
+	simuectx "github.com/openairinterface/ngap-tester/simue/context"
 )
 
 const UE_PROFILE string = "default" // Should be listed in yaml config file
@@ -21,45 +19,35 @@ func runScenarioTC1(test *TestScenario) error {
 	test.Log.Infoln("Running scenario ", test.Id, " : ", test.Description)
 	test.Status = SCENARIO_FAILED
 
+	// ===================================================================
+	// SCENARIO Item here concerning gNB interface management
+	// ===================================================================
 	gnb, err := factory.AppConfig.Configuration.GetGNodeBAt(FIRST_GNB_POS)
 	if err != nil {
 		err = fmt.Errorf("Failed to fetch gNB context: %v", err)
 		test.Log.Errorln(err)
 		return err
 	}
-
-	// Test scenario
-	// Actually this procedure is synchronous
-	err = PerformNgapSetupProcedure(test, gnb.GnbName, FIRST_AMF)
+	_, err = PerformNgapSetupProcedure(test, gnb.GnbName, FIRST_AMF)
 	if err != nil {
 		err = fmt.Errorf("Failed to Perform NGAP Setup Procedure: %v", err)
 		test.Log.Errorln(err)
 		return err
 	}
-
-	// Allocate objects separatly from launch of scenarios
+	// ===================================================================
+	// Internals: Allocate objects separatly from launch of scenarios
 	// May help reduce delays between start of scenarios in seq or //
-	keysUeProf := make([]string, 0, len(factory.AppConfig.Configuration.UeProfiles))
-	for k := range factory.AppConfig.Configuration.UeProfiles {
-		test.Log.Traceln("key UE profile ", k)
-		keysUeProf = append(keysUeProf, k)
-	}
-	sort.Strings(keysUeProf)
-	for k := 0; k < len(keysUeProf); k = k + 1 {
-		ueProfile := factory.AppConfig.Configuration.UeProfiles[keysUeProf[k]]
-		startImsi, err := strconv.Atoi(ueProfile.StartImsi)
-		if err != nil {
-			err = fmt.Errorf("invalid imsi value: %v", ueProfile.StartImsi)
-			test.Log.Errorln(err)
-			return err
-		}
-		for count, imsi := 1, startImsi; count <= ueProfile.NumUes; count, imsi = count+1, imsi+1 {
-			imsiStr := "imsi-" + strconv.Itoa(imsi)
-			test.InitImsi(gnb, imsiStr, keysUeProf[k])
-			test.Log.Traceln("provision UE ", imsiStr)
-		}
+	// ===================================================================
+	err = test.AllocateSimUes(gnb)
+	if err != nil {
+		err = fmt.Errorf("Failed to allocate SimUe(s): %v", err)
+		test.Log.Errorln(err)
+		return err
 	}
 
+	// ===================================================================
+	// Internals: go routines logic concerning UE scenario
+	// ===================================================================
 	keysImsi := make([]string, 0, len(test.SimUe))
 	for k := range test.SimUe {
 		keysImsi = append(keysImsi, k)
@@ -68,9 +56,9 @@ func runScenarioTC1(test *TestScenario) error {
 		imsiStr := keysImsi[i]
 		wg.Add(1)
 		scnUeCtx := test.SimUe[imsiStr]
-		go func(scnrUeCtx *ScenarioUeContext) {
+		go func(simUe *simuectx.SimUe) {
 			defer wg.Done()
-			err := test.runScenarioTC1Ue(scnrUeCtx, imsiStr)
+			err := test.runScenarioTC1Ue(simUe, imsiStr)
 			// Execution for the UE is complete. Count UE result as success or failure
 			Mu.Lock()
 			if err != nil {
@@ -96,19 +84,12 @@ func runScenarioTC1(test *TestScenario) error {
 	return nil
 }
 
-func (scn *TestScenario) runScenarioTC1Ue(scnrUeCtx *ScenarioUeContext, imsiStr string) error {
-
+func (scn *TestScenario) runScenarioTC1Ue(simUe *simuectx.SimUe, imsiStr string) error {
+	// ===================================================================
+	// SCENARIO concerning UEs starts here
+	// ===================================================================
 	scn.Log.Traceln("runScenarioTC1Ue started ")
-	nasPdu, err := realue.HandleRegRequestEvent(scnrUeCtx.SimUe.RealUe, nil)
-	if err != nil {
-		return err
-	}
-	msg := realue.FormUuMessage(common.N1_SEND_SDU_EVENT+common.NAS_5GMM_REGISTRATION_REQUEST, nasPdu)
-	msg.Tac = scnrUeCtx.SimUe.GnB.SupportedTaList[0].Tac
-	msg.NrCgi = scnrUeCtx.SimUe.GnB.NrCgiCellList[0]
-	scnrUeCtx.SendToGnbUe(msg)
-
-	scnrUeCtx.HandleEvents()
+	_, err := simue.PerformRegisterProcedure(simUe)
 	scn.Log.Traceln("runScenarioTC1Ue ended")
-	return nil
+	return err
 }

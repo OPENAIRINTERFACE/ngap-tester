@@ -27,26 +27,26 @@ configuration:
       name: gnb1 # gNB name that uniquely identify a gNB within application TODO make it equal to upper id    
       globalRanId:
         plmnId:
-          mcc: 001 # Mobile Country Code (3 digits string, digit: 0~9)
-          mnc: 01 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+          mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
+          mnc: 95 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
         gNbId: 
           bitLength: 24
           gNBValue: 000102 # gNB identifier Equal to the leftmost bits of the NR Cell Identity IE contained in the NR CGI IE of each cell served by the gNB.
       nrCgiCellList:
         - plmnId:
-            mcc: 001 # Mobile Country Code (3 digits string, digit: 0~9)
-            mnc: 01 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+            mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
+            mnc: 95 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
           nrCellId: 000102001 # gNB identifier (4.5 bytes hex string)
         - plmnId:
-            mcc: 001 # Mobile Country Code (3 digits string, digit: 0~9)
-            mnc: 01 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+            mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
+            mnc: 95 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
           nrCellId: 000102002 # gNB identifier (4.5 bytes hex string)
       supportedTaList:
-        - tac: 000001 # Tracking Area Code (3 bytes hex string, range: 000000~FFFFFF)
+        - tac: 00a000 # Tracking Area Code (3 bytes hex string, range: 000000~FFFFFF)
           broadcastPlmnList:
             - plmnId:
-                mcc: 001
-                mnc: 01
+                mcc: 208
+                mnc: 95
               taiSliceSupportList:
                 - sst: 1
                   sd: FFFFFF
@@ -61,17 +61,17 @@ configuration:
       port: 38412 # AMF port
   ueProfiles: # profile information
     default: # uniquely identifies a profile within application
-      startImsi: 001010000000001
+      startImsi: 208950000000031
       numUes: 1
       opc: "63bfa50ee6523365ff14c1f45f88737d"
       key: "0C0A34601D4F07677303652C0462535B"
       sequenceNumber: "16f3b3f70fc2"
       dnn: "default"
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>
-        mcc: 001 # Mobile Country Code (3 digits string, digit: 0~9)
-        mnc: 01 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+        mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
+        mnc: 95 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
       provision:
-        createSubscriber: yes
+        createSubscriber: no
         createRestUrl: http://192.168.70.136/nudr-dr/v1/subscription-data/SUBSCRIBER-SUPI/authentication-data/authentication-subscription
         deleteRestUrl: http://192.168.70.136/nudr-dr/v1/subscription-data/SUBSCRIBER-SUPI/authentication-data/authentication-subscription
         createJsonContent: |

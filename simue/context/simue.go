@@ -6,6 +6,7 @@ package context
 
 import (
 	"sync"
+	"time"
 
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/factory"
@@ -92,4 +93,32 @@ func GetSimUe(supi string) *SimUe {
 		return nil
 	}
 	return simue
+}
+
+func (ue *SimUe) RcvTimedMilliSecondEvent(timeOutMilliSeconds int) (common.InterfaceMessage, bool) {
+	select {
+	case msg, ok := <-ue.ReadChan:
+		ue.Log.Traceln("Received event ", msg.GetEventType())
+		return msg, ok
+
+	case <-time.After(time.Duration(timeOutMilliSeconds) * time.Millisecond):
+		return nil, false
+	}
+}
+
+func (ue *SimUe) RcvTimedSecondEvent(timeOutSeconds int) (common.InterfaceMessage, bool) {
+	select {
+	case msg, ok := <-ue.ReadChan:
+		ue.Log.Traceln("Received event ", msg.GetEventType())
+		return msg, ok
+
+	case <-time.After(time.Duration(timeOutSeconds) * time.Second):
+		return nil, false
+	}
+}
+
+func (ue *SimUe) RcvEvent() (common.InterfaceMessage, bool) {
+	msg, ok := <-ue.ReadChan
+	ue.Log.Traceln("Received event ", msg.GetEventType())
+	return msg, ok
 }
