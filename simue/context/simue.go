@@ -49,6 +49,7 @@ type SubscriberProvision struct {
 type SimUe struct {
 	Supi      string
 	GnB       *gnbctx.GNodeB
+	GnbCpUe   *gnbctx.GnbCpUe
 	RealUe    *realuectx.RealUe
 	Procedure common.ProcedureType
 	WaitGrp   sync.WaitGroup
@@ -89,7 +90,7 @@ func NewSimUe(supi string, ueModel string, gnb *gnbctx.GNodeB) *SimUe {
 
 func GetSimUe(supi string) *SimUe {
 	simue, found := SimUeTable[supi]
-	if found == false {
+	if !found {
 		return nil
 	}
 	return simue

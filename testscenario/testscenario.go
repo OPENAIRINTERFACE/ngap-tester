@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-	"net"
 	"net/http"
 	"os"
 	"sort"
@@ -20,8 +19,8 @@ import (
 	"github.com/omec-project/gnbsim/factory"
 	"github.com/omec-project/gnbsim/gnodeb"
 	"github.com/omec-project/gnbsim/gnodeb/context"
-	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	"github.com/omec-project/gnbsim/logger"
+	simgnbctx "github.com/openairinterface/ngap-tester/simgnb/context"
 	"github.com/openairinterface/ngap-tester/simue"
 	simuectx "github.com/openairinterface/ngap-tester/simue/context"
 	"github.com/sirupsen/logrus"
@@ -38,14 +37,17 @@ const (
 )
 
 type TestScenario struct {
-	Id            string
-	Description   string
-	Status        StatusType
-	Action        func(test *TestScenario) error
-	UePassedCount uint
-	UeFailedCount uint
-	SimUe         map[string]*simuectx.SimUe
-	ErrorList     []error
+	Id             string
+	Description    string
+	Status         StatusType
+	Action         func(test *TestScenario) error
+	UePassedCount  uint
+	UeFailedCount  uint
+	GnbFailedCount uint
+	SimUe          map[string]*simuectx.SimUe
+	ErrorList      []error
+	SimGnb         []*simgnbctx.SimGnb
+	WaitGroups     []sync.WaitGroup
 
 	ReadChan chan common.InterfaceMessage // gnb AMF to Scenario
 
@@ -139,7 +141,7 @@ func RunTestsuite(ts []TestScenario) error {
 	var wg sync.WaitGroup
 	var Mu sync.Mutex
 
-	err := gnodeb.InitializeAllGnbs()
+	gnbSims, err := InitializeAllGnbSims()
 	if err != nil {
 		logger.AppLog.Errorln("Failed to initialize gNodeBs: ", err)
 		return err
@@ -148,7 +150,7 @@ func RunTestsuite(ts []TestScenario) error {
 	var status bool = true
 
 	for i, tst := range ts {
-
+		tst.SimGnb = gnbSims
 		err := tst.ProvisionUes()
 
 		if err != nil {
@@ -207,52 +209,27 @@ func DisplayTestsuiteResults(ts []TestScenario) {
 	}
 }
 
-func PerformNgapSetupProcedure(test *TestScenario, gnbName string, amfName string) (common.InterfaceMessage, error) {
-	var err error
-
-	gnbCtx, err := factory.AppConfig.Configuration.GetGNodeB(gnbName)
-	if err != nil {
-		test.Log.Errorln("GetGNodeB returned:", err)
-		return nil, err
-	}
-
-	if gnbCtx.Amf == nil {
-		amf, err := factory.AppConfig.Configuration.GetAmf(amfName)
+func InitializeAllGnbSims() ([]*simgnbctx.SimGnb, error) {
+	gnbs := factory.AppConfig.Configuration.Gnbs
+	simGnbs := make([]*simgnbctx.SimGnb, len(factory.AppConfig.Configuration.Gnbs))
+	i := 0
+	for _, gnb := range gnbs {
+		simGnb := simgnbctx.NewSimGnb()
+		err := gnodeb.Init(gnb, simGnb.ReadChan)
 		if err != nil {
-			test.Log.Errorln("GetAmf returned:", err)
+			gnb.Log.Errorln("Failed to initialize GNodeB, err:", err)
 			return nil, err
 		}
-		if amf.AmfIp == "" {
-			// It is important to do this lookup just in time, not at simulation startup
-			addrs, err := net.LookupHost(amf.AmfHostName)
-			if err != nil {
-				return nil, fmt.Errorf("failed to resolve amf host name: %v, err: %s", amf.AmfHostName, err)
-			}
-			gnbCtx.Amf = gnbctx.NewGnbAmf(addrs[0], gnbctx.NGAP_SCTP_PORT, test.ReadChan)
+		err = simGnb.Init(gnb.GnbName)
+		if err != nil {
+			gnb.Log.Errorln("Failed to initialize SimGnb, err:", err)
+			return nil, err
 		}
+		simGnbs[i] = simGnb
+		i = i + 1
 	}
-
-	err = gnbCtx.CpTransport.ConnectToPeer(gnbCtx.Amf)
-	if err != nil {
-		test.Log.Errorln("ConnectToAmf returned:", err)
-		return nil, err
-	}
-
-	err = gnodeb.SendNgSetup(gnbCtx, gnbCtx.Amf)
-	if err != nil {
-		test.Log.Errorln("SendNgSetup returned:", err)
-		return nil, err
-	}
-
-	msg, ok := test.RcvTimedSecondEvent(3)
-	if !ok {
-		err = fmt.Errorf("Response to NGSetup-Request to %v timed-out!", amfName)
-	}
-
-	// LG TODO check NGAPSetupResponse vs NGAPSetupFailure here ?
-	return msg, err
+	return simGnbs, nil
 }
-
 func (test *TestScenario) AllocateSimUes(gnb *context.GNodeB) error {
 
 	keysUeProf := make([]string, 0, len(factory.AppConfig.Configuration.UeProfiles))
@@ -375,31 +352,6 @@ func (scnr *TestScenario) InitImsi(gnb *context.GNodeB, imsiStr string, ueModel 
 	simUe := simue.InitUE(imsiStr, ueModel, gnb)
 	scnr.SimUe[imsiStr] = simUe
 	return nil
-}
-
-func (scnr *TestScenario) RcvTimedMilliSecondEvent(timeOutMilliSeconds int) (common.InterfaceMessage, bool) {
-	select {
-	case msg, ok := <-scnr.ReadChan:
-		return msg, ok
-
-	case <-time.After(time.Duration(timeOutMilliSeconds) * time.Millisecond):
-		return nil, false
-	}
-}
-
-func (scnr *TestScenario) RcvTimedSecondEvent(timeOutSeconds int) (common.InterfaceMessage, bool) {
-	select {
-	case msg, ok := <-scnr.ReadChan:
-		return msg, ok
-
-	case <-time.After(time.Duration(timeOutSeconds) * time.Second):
-		return nil, false
-	}
-}
-
-func (scnr *TestScenario) RcvEvent() (common.InterfaceMessage, bool) {
-	msg, ok := <-scnr.ReadChan
-	return msg, ok
 }
 
 func (scnr *TestScenario) SendEventToSimUe(imsiStr string, event common.EventType) {

@@ -40,7 +40,7 @@ func ConnectToGnb(simUe *simuectx.SimUe) error {
 
 	var err error
 	gNb := simUe.GnB
-	simUe.WriteGnbUeChan, err = gnodeb.RequestConnection(gNb, &uemsg)
+	simUe.WriteGnbUeChan, simUe.GnbCpUe, err = gnodeb.RequestConnection(gNb, &uemsg)
 	if err != nil {
 		simUe.Log.Infof("ERROR -- connecting to gNodeB, Name:%v, IP:%v, Port:%v", gNb.GnbName,
 			gNb.GnbN2Ip, gNb.GnbN2Port)
@@ -55,4 +55,11 @@ func ConnectToGnb(simUe *simuectx.SimUe) error {
 func SendToGnbUe(simUe *simuectx.SimUe, msg common.InterfaceMessage) {
 	simUe.Log.Traceln("Sending", msg.GetEventType(), "to GnbUe")
 	simUe.WriteGnbUeChan <- msg
+}
+
+func FormN2Message(event common.EventType, n2Pdu []byte) *common.N2EncodedMessage {
+	msg := &common.N2EncodedMessage{}
+	msg.Event = event
+	msg.N2Pdus = n2Pdu
+	return msg
 }
