@@ -25,13 +25,11 @@ const (
 func runScenarioTC1(test *TestScenario) error {
 	var Mu sync.Mutex
 	test.Log.Infoln("Running scenario ", test.Id, " : ", test.Description)
-	test.Status = SCENARIO_FAILED
+	test.Status = SCENARIO_UNDEFINED
 
 	// Array of waitgroup
 	test.WaitGroups = make([]sync.WaitGroup, TC1_WG_LAST)
 
-	test.Log.Errorln("TC1_WG_LAST = ", TC1_WG_LAST)
-	test.Log.Errorln("Len(test.WaitGroups) = ", len(test.WaitGroups))
 	// ===================================================================
 	// Internals: Allocate objects separatly from launch of scenarios
 	// May help reduce delays between start of scenarios in seq or //
@@ -55,6 +53,7 @@ func runScenarioTC1(test *TestScenario) error {
 			if err != nil {
 				test.GnbFailedCount++
 				test.ErrorList = append(test.ErrorList, err)
+				test.Status = SCENARIO_FAILED
 			}
 			Mu.Unlock()
 		}(test.SimGnb[i])
@@ -79,25 +78,31 @@ func runScenarioTC1(test *TestScenario) error {
 			if err != nil {
 				test.UeFailedCount++
 				test.ErrorList = append(test.ErrorList, err)
+				test.Status = SCENARIO_FAILED
 			} else {
 				test.UePassedCount++
 			}
 			Mu.Unlock()
 		}(scnUeCtx)
 
-		if factory.AppConfig.Configuration.ExecUesInParallel == false {
+		if !factory.AppConfig.Configuration.ExecUesInParallel {
 			test.Log.Traceln("Waiting for UE ", imsiStr, " to continue...")
 			test.WaitGroups[TC1_WG_SIM_UE_END].Wait()
 		}
 	}
-	if factory.AppConfig.Configuration.ExecUesInParallel == true {
+	if factory.AppConfig.Configuration.ExecUesInParallel {
 		test.Log.Infoln("Waiting for all UEs to finish processing...")
 		test.WaitGroups[TC1_WG_SIM_UE_END].Wait()
 	}
 	test.Log.Infoln("Waiting for all gNB to finish processing...")
 	test.WaitGroups[TC1_WG_SIM_GNB_END].Wait()
-	test.Log.Infoln("Scenario ended")
-	test.Status = SCENARIO_PASSED
+	if test.Status == SCENARIO_FAILED {
+		test.Log.Infoln("Scenario ended with errors")
+	} else {
+		test.Status = SCENARIO_PASSED
+		test.Log.Infoln("Scenario ended with success")
+	}
+
 	return nil
 }
 
@@ -109,7 +114,11 @@ func (test *TestScenario) runScenarioTC1Ue(simUe *simuectx.SimUe, imsiStr string
 	test.WaitGroups[TC1_WG_NG_SETUP].Wait()
 
 	_, err := simue.PerformRegisterProcedure(simUe)
-	test.Log.Traceln("runScenarioTC1Ue ended")
+	if err != nil {
+		test.Log.Errorln("runScenarioTC1Ue ended with error: ", err)
+	} else {
+		test.Log.Traceln("runScenarioTC1Ue ended")
+	}
 	return err
 }
 
@@ -123,7 +132,6 @@ func (test *TestScenario) runScenarioTC1Gnb(simGnb *simgnbctx.SimGnb) error {
 	if err != nil {
 		err = fmt.Errorf("Failed to Perform NGAP Setup Procedure: %v", err)
 		test.Log.Errorln(err)
-		return err
 	}
 	test.WaitGroups[TC1_WG_NG_SETUP].Done()
 

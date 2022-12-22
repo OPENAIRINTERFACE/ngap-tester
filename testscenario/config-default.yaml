@@ -65,13 +65,54 @@ configuration:
       numUes: 1
       opc: "63bfa50ee6523365ff14c1f45f88737d"
       key: "0C0A34601D4F07677303652C0462535B"
-      sequenceNumber: "16f3b3f70fc2"
-      dnn: "default"
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 95 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+      nas:
+        sequenceNumber: "000000000120"
+        dnn: "default"
+        securityCapabilities: # TODO, unused
+          fgIa0: true
+          fgIa1: true
+          fgIa2: true
+          fgIa3: true
+          fgIa4: false
+          fgIa5: false
+          fgIa6: false
+          fgIa7: false
+          fgEa0: true
+          fgEa1: true
+          fgEa2: true
+          fgEa3: true
+          fgEa4: false
+          fgEa5: false
+          fgEa6: false
+          fgEa7: false
+        additional5gSecurityInformation: # TODO, unused
+          rinmr: false
+          hdp: false
+        fgMmCapabilities: # TODO, unused
+          sGC: false
+          fgIphcCpCIoT: false
+          n3Data: false
+          fgCpCIoT: false
+          restrictEc: false
+          lPP: false
+          hoAttach: false
+          s1Mode: false
+          racs: false
+          nssaa: false
+          fgLcs: false
+          v2xcnpc5: false
+          v2x: false
+          fgUpCIoT: false
+          fgSrvcc: false
+          fgEhcCpCIoT: false
+          multipleUp: false
+          wusa: false
+          cag: false
       provision:
-        createSubscriber: no
+        createSubscriber: yes
         createRestUrl: http://192.168.70.136/nudr-dr/v1/subscription-data/SUBSCRIBER-SUPI/authentication-data/authentication-subscription
         deleteRestUrl: http://192.168.70.136/nudr-dr/v1/subscription-data/SUBSCRIBER-SUPI/authentication-data/authentication-subscription
         createJsonContent: |
@@ -80,7 +121,7 @@ configuration:
             "encPermanentKey":"0C0A34601D4F07677303652C0462535B",
             "protectionParameterId":"0C0A34601D4F07677303652C0462535B",
             "sequenceNumber": {
-                "sqn" : "000000000020", 
+                "sqn" : "000000000120", 
                 "sqnScheme": "NON_TIME_BASED", 
                 "lastIndexes": {
                     "ausf": 0 
@@ -88,7 +129,7 @@ configuration:
                 },
             "authenticationManagementField":"8000",
             "algorithmId":"milenage",
-            "encOpcKey":"63bfa50ee6523365ff14c1f45f88737d",
+            "encOpcKey": "63bfa50ee6523365ff14c1f45f88737d",
             "encTopcKey":"63bfa50ee6523365ff14c1f45f88737d", 
             "vectorGenerationInHss": false, 
             "n5gcAuthMethod": "", 
