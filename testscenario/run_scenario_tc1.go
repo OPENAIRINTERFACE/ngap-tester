@@ -116,6 +116,12 @@ func (test *TestScenario) runScenarioTC1Ue(simUe *simuectx.SimUe, imsiStr string
 	_, err := simue.PerformRegisterProcedure(simUe)
 	if err != nil {
 		test.Log.Errorln("runScenarioTC1Ue ended with error: ", err)
+		return err
+	}
+	_, err = simue.PerformDeregisterProcedureUEOriginatingDeregistration(simUe)
+
+	if err != nil {
+		test.Log.Errorln("runScenarioTC1Ue ended with error: ", err)
 	} else {
 		test.Log.Traceln("runScenarioTC1Ue ended")
 	}
@@ -134,7 +140,6 @@ func (test *TestScenario) runScenarioTC1Gnb(simGnb *simgnbctx.SimGnb) error {
 		test.Log.Errorln(err)
 	}
 	test.WaitGroups[TC1_WG_NG_SETUP].Done()
-
 	test.WaitGroups[TC1_WG_SIM_UE_END].Wait()
 	test.Log.Traceln("runScenarioTC1Gnb ended")
 

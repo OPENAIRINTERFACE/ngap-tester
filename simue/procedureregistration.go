@@ -23,7 +23,7 @@ func PerformRegisterProcedure(simUe *simuectx.SimUe) (common.InterfaceMessage, e
 	//-------------------
 	// Step send NAS Registration_Request
 	//-------------------
-	nasPdu, err := realue.EncodeRegRequestEvent(simUe.RealUe)
+	nasPdu, err := realue_nas.GetRegisterRequest(simUe.RealUe)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func PerformRegisterProcedure(simUe *simuectx.SimUe) (common.InterfaceMessage, e
 	// Step Send back  NGAP-DownlinkNASTransport/NAS-Registration_Complete
 	//-------------------
 
-	nasPdu, err = realue.EncodeRegistrationComplete(simUe.RealUe)
+	nasPdu, err = realue_nas.GetRegistrationComplete(simUe.RealUe)
 	if err != nil {
 		simUe.Log.Errorln("Failed to encode NAS-Registration_Complete NAS Message due to", err)
 		return nil, err
