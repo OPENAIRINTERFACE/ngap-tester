@@ -11,6 +11,8 @@ import (
 	"github.com/omec-project/gnbsim/gnodeb"
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	"github.com/omec-project/gnbsim/realue"
+	realue_nas "github.com/omec-project/gnbsim/realue/nas"
+	"github.com/omec-project/nas"
 	simuectx "github.com/openairinterface/ngap-tester/simue/context"
 )
 
@@ -62,4 +64,41 @@ func FormN2Message(event common.EventType, n2Pdu []byte) *common.N2EncodedMessag
 	msg.Event = event
 	msg.N2Pdus = n2Pdu
 	return msg
+}
+
+func ExpectReceiveN1N2(simUe *simuectx.SimUe, ngapProcedureCode int64, nasMsgType uint8, timeOutSeconds int) (n1N2MsgResp *common.N1N2Message, n1DecodedMsg *nas.Message, err error) {
+	msgResp, ok := simUe.RcvTimedSecondEvent(timeOutSeconds)
+	if !ok {
+		err = fmt.Errorf("expected NGAP %v / NAS %v: coming from AMF timed-out", err)
+		return
+	}
+	if msgResp.GetEventType() != common.N1_N2_RECV_SDU_EVENT {
+		err = fmt.Errorf("unexpected event %v, wanted: N1_N2_RECV_SDU_EVENT", msgResp.GetEventType().String())
+		return
+	}
+	n1N2MsgResp = msgResp.(*common.N1N2Message)
+	if n1N2MsgResp.NgapProcedureCode != ngapProcedureCode {
+		err = fmt.Errorf("unexpected NGAP procedure code %v, wanted: %v", n1N2MsgResp.NgapProcedureCode, ngapProcedureCode)
+		return
+	}
+	if nasMsgType != 0 {
+		if n1N2MsgResp.NasPdu == nil {
+			err = fmt.Errorf("NAS message (type %v) missing", nasMsgType)
+			return
+		}
+		n1DecodedMsg, err = realue_nas.NASDecode(simUe.RealUe, nas.GetSecurityHeaderType(n1N2MsgResp.NasPdu.Value), n1N2MsgResp.NasPdu.Value)
+		msgType := n1DecodedMsg.GmmHeader.GetMessageType()
+		if msgType != nasMsgType {
+			err = fmt.Errorf("NAS message (type %v) unexpected (type %v)", msgType, nasMsgType)
+		}
+	} else {
+		if n1N2MsgResp.NasPdu != nil {
+			n1DecodedMsg, err = realue_nas.NASDecode(simUe.RealUe, nas.GetSecurityHeaderType(n1N2MsgResp.NasPdu.Value), n1N2MsgResp.NasPdu.Value)
+			if err != nil {
+				msgType := n1DecodedMsg.GmmHeader.GetMessageType()
+				err = fmt.Errorf("NAS message unexpected (type %v)", msgType)
+			}
+		}
+	}
+	return
 }
