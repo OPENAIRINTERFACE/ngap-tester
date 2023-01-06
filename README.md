@@ -25,6 +25,8 @@ Core Network
 
 # Architecture
 
+Architecture is still under modification. 
+
 # License
 
 # Building
@@ -35,4 +37,26 @@ Locally:
 $ go mod vendor
 $ go build -mod=vendor
 $ ./ngap-tester --help
+```
+
+# Running
+
+## Example running with OAI 5G Core network
+
+The ngaptester [default config file](https://github.com/OPENAIRINTERFACE/ngap-tester/blob/donotlookatthis-1/testscenario/config-default.yaml) is customized for running ngaptester with a local [docker deployment](https://github.com/OPENAIRINTERFACE/ngap-tester/blob/donotlookatthis-1/test/docker-compose-basic-nrf.yaml) of OAI core network.
+
+### Deploying OAI CN
+
+First you have to [provision](https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-fed/-/blob/master/docs/RETRIEVE_OFFICIAL_IMAGES.md) OAI CN docker images of network functions.
+
+Then 
+
+```
+cd ngap-tester/test && docker-compose -f ./docker-compose-basic-nrf.yaml up
+```
+
+### Running ngaptester
+
+```
+$ ./ngap-tester run --tf ./testscenario/example-test-file
 ```
