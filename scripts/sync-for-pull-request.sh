@@ -7,7 +7,6 @@
 # ngap branch: N/A
 ./scripts/sync-sub-modules.py \
    --synchronize \
-   --force \
-   --gnbsim upstream-2022-10-20-sync \
+   --gnbsim donotlookatthis-1
    --nas ngap-tester \
-   --ngap ngap-tester
+   --ngap donotlookatthis-1
