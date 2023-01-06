@@ -79,10 +79,6 @@ func SendRegistrationComplete(simUe *simuectx.SimUe) error {
 
 func SendPduSessionEstablishmentRequest(simUe *simuectx.SimUe) error {
 
-	// sNssai := models.Snssai{
-	// 	Sst: 1,
-	// 	Sd:  "010203",
-	// }
 	nasPdu := nasTestpacket.GetUlNasTransport_PduSessionEstablishmentRequest(10,
 		nasMessage.ULNASTransportRequestTypeInitialRequest, simUe.RealUe.Dnn, simUe.RealUe.SNssai)
 
