@@ -5,9 +5,14 @@
 package simue
 
 import (
+	"fmt"
+
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/gnodeb"
 	realue_nas "github.com/omec-project/gnbsim/realue/nas"
+	"github.com/omec-project/nas"
+	"github.com/omec-project/nas/nasMessage"
+	"github.com/omec-project/nas/nasTestpacket"
 	simuectx "github.com/openairinterface/ngap-tester/simue/context"
 )
 
@@ -61,6 +66,30 @@ func SendRegistrationComplete(simUe *simuectx.SimUe) error {
 	nasPdu, err := realue_nas.GetRegistrationComplete(simUe.RealUe)
 	if err != nil {
 		simUe.Log.Errorln("Failed to encode NAS-Registration_Complete NAS Message due to", err)
+		return err
+	}
+	sendMsg, err := gnodeb.GetUplinkNASTransport(simUe.GnB, simUe.GnbCpUe, nasPdu)
+	if err != nil {
+		return err
+	}
+	msg := FormN2Message(common.N2_SEND_SDU_EVENT, sendMsg)
+	SendToGnbUe(simUe, msg)
+	return nil
+}
+
+func SendPduSessionEstablishmentRequest(simUe *simuectx.SimUe) error {
+
+	// sNssai := models.Snssai{
+	// 	Sst: 1,
+	// 	Sd:  "010203",
+	// }
+	nasPdu := nasTestpacket.GetUlNasTransport_PduSessionEstablishmentRequest(10,
+		nasMessage.ULNASTransportRequestTypeInitialRequest, simUe.RealUe.Dnn, simUe.RealUe.SNssai)
+
+	nasPdu, err := realue_nas.EncodeNasPduWithSecurity(simUe.RealUe, nasPdu,
+		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true)
+	if err != nil {
+		fmt.Println("Failed to encrypt PDU Session Establishment Request Message", err)
 		return err
 	}
 	sendMsg, err := gnodeb.GetUplinkNASTransport(simUe.GnB, simUe.GnbCpUe, nasPdu)

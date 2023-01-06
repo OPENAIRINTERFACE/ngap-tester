@@ -13,7 +13,8 @@ import (
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	"github.com/omec-project/gnbsim/logger"
 	realuectx "github.com/omec-project/gnbsim/realue/context"
-	"github.com/omec-project/nas/security"
+	"github.com/omec-project/nas/nasMessage"
+	"github.com/omec-project/nas/nasType"
 
 	"github.com/sirupsen/logrus"
 )
@@ -76,8 +77,14 @@ func NewSimUe(supi string, ueModel string, gnb *gnbctx.GNodeB) *SimUe {
 	simue.Supi = supi
 	simue.ReadChan = make(chan common.InterfaceMessage, 5)
 	// TODO select prefered security algorithms
-	simue.RealUe = realuectx.NewRealUe(supi,
-		security.AlgCiphering128NEA0, security.AlgIntegrity128NIA2,
+
+	ueSecurityCapability := &nasType.UESecurityCapability{
+		Iei:    nasMessage.RegistrationRequestUESecurityCapabilityType,
+		Len:    uint8(ueProfile.Nas.SecurityCapabilities.Len),
+		Buffer: ueProfile.Nas.SecurityCapabilities.ToBytes(),
+	}
+
+	simue.RealUe = realuectx.NewRealUe(supi, ueSecurityCapability,
 		simue.ReadChan, ueProfile.Plmn, ueProfile.Key, ueProfile.Opc, ueProfile.Nas.SeqNum,
 		ueProfile.Nas.Dnn, ueProfile.Nas.SNssai)
 

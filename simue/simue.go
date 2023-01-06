@@ -89,7 +89,28 @@ func ExpectReceiveN1N2(simUe *simuectx.SimUe, ngapProcedureCode int64, nasMsgTyp
 		n1DecodedMsg, err = realue_nas.NASDecode(simUe.RealUe, nas.GetSecurityHeaderType(n1N2MsgResp.NasPdu.Value), n1N2MsgResp.NasPdu.Value)
 		msgType := n1DecodedMsg.GmmHeader.GetMessageType()
 		if msgType != nasMsgType {
-			err = fmt.Errorf("NAS message (type %v) unexpected (type %v)", msgType, nasMsgType)
+			if msgType == nas.MsgTypeDLNASTransport {
+				payload := n1DecodedMsg.GmmMessage.DLNASTransport.PayloadContainer
+				if payload.Len != 0 {
+					buffer := payload.Buffer[:payload.Len]
+					m := nas.NewMessage()
+					err = m.PlainNasDecode(&buffer)
+					if err != nil {
+						err = fmt.Errorf("failed to decode payload container")
+						return
+					}
+					msgType = m.GsmHeader.GetMessageType()
+					if msgType != nasMsgType {
+						err = fmt.Errorf("NAS message (type %v) unexpected (type %v)", msgType, nasMsgType)
+						return
+					}
+					// remove wrapper of container
+					n1DecodedMsg = m
+				}
+			} else {
+				err = fmt.Errorf("NAS message (type %v) unexpected (type %v)", msgType, nasMsgType)
+				return
+			}
 		}
 	} else {
 		if n1N2MsgResp.NasPdu != nil {
@@ -97,8 +118,11 @@ func ExpectReceiveN1N2(simUe *simuectx.SimUe, ngapProcedureCode int64, nasMsgTyp
 			if err != nil {
 				msgType := n1DecodedMsg.GmmHeader.GetMessageType()
 				err = fmt.Errorf("NAS message unexpected (type %v)", msgType)
+				return
 			}
 		}
 	}
+	simUe.Log.Traceln("Expected event occured N2 proc code ", ngapProcedureCode,
+		" N1 msg type ", nasMsgType)
 	return
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/omec-project/gnbsim/gnodeb"
 	realue_nas "github.com/omec-project/gnbsim/realue/nas"
 	"github.com/omec-project/nas"
+	"github.com/omec-project/nas/nasConvert"
 	"github.com/omec-project/nas/nasMessage"
 	"github.com/omec-project/nas/nasTestpacket"
 	"github.com/omec-project/nas/nasType"
@@ -21,9 +22,23 @@ func PerformSecurityProcedure(simUe *simuectx.SimUe, nasMsg *nas.Message) (err e
 		Len:    uint16(len(simUe.RealUe.Suci)), // suci
 		Buffer: simUe.RealUe.Suci,
 	}
+	snssaiBuf := nasConvert.SnssaiToNas(*simUe.RealUe.SNssai)
+	requestedNSSAI := &nasType.RequestedNSSAI{
+		Iei:    nasMessage.RegistrationRequestRequestedNSSAIType,
+		Len:    uint8(len(snssaiBuf)),
+		Buffer: snssaiBuf,
+	}
+
+	networkSlicingIndication := nasType.NewNetworkSlicingIndication(
+		nasMessage.RegistrationRequestNetworkSlicingIndicationType)
+	// LG: Useless, for memo
+	networkSlicingIndication.SetDCNI(0)
+	networkSlicingIndication.SetNSSCI(0)
+
 	registrationRequestWith5GMM := nasTestpacket.GetRegistrationRequest(
-		nasMessage.RegistrationType5GSInitialRegistration, mobileId5GS, nil,
-		simUe.RealUe.GetUESecurityCapability(), simUe.RealUe.Get5GMMCapability(), nil, nil)
+		nasMessage.RegistrationType5GSInitialRegistration, mobileId5GS, requestedNSSAI,
+		networkSlicingIndication, simUe.RealUe.GetUESecurityCapability(),
+		simUe.RealUe.Get5GMMCapability(), nil, nil)
 
 	simUe.Log.Traceln("Generating Security Mode Complete Message")
 	nasPdu := nasTestpacket.GetSecurityModeComplete(registrationRequestWith5GMM)

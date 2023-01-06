@@ -71,7 +71,11 @@ configuration:
       nas:
         sequenceNumber: "000000000120"
         dnn: "default"
-        securityCapabilities: # TODO, unused
+        sNssai:
+          sst: 222
+          sd: 00007B
+        securityCapabilities:
+          len: 2
           fgIa0: true
           fgIa1: true
           fgIa2: true

@@ -148,6 +148,8 @@ services:
             - SD_1=1
             - SST_2=222
             - SD_2=123
+            - INT_ALGO_LIST=["NIA2" , "NIA1"]
+            - CIPH_ALGO_LIST=["NEA0" , "NEA2"]
             - AMF_INTERFACE_NAME_FOR_NGAP=eth0
             - AMF_INTERFACE_NAME_FOR_N11=eth0
             - SMF_INSTANCE_ID_0=1
@@ -166,12 +168,12 @@ services:
             - MYSQL_DB=oai_db
             - NRF_IPV4_ADDRESS=192.168.70.130
             - NRF_PORT=80
-            - EXTERNAL_NRF=no
+            - EXTERNAL_NRF=yes
             - NF_REGISTRATION=yes
             - SMF_SELECTION=yes
             - USE_FQDN_DNS=yes
             - EXTERNAL_AUSF=yes
-            - EXTERNAL_UDM=yes
+            - EXTERNAL_UDM=no
             - EXTERNAL_NSSF=no
             - USE_HTTP2=no
             - NRF_API_VERSION=v1

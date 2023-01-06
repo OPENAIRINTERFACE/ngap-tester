@@ -118,6 +118,13 @@ func (test *TestScenario) runScenarioTC1Ue(simUe *simuectx.SimUe, imsiStr string
 		test.Log.Errorln("runScenarioTC1Ue ended with error: ", err)
 		return err
 	}
+
+	_, err = simue.PerformPduSessionEstablishmentProcedure(simUe)
+	if err != nil {
+		test.Log.Errorln("runScenarioTC1Ue ended with error: ", err)
+		return err
+	}
+
 	_, err = simue.PerformDeregisterProcedureUEOriginatingDeregistration(simUe)
 
 	if err != nil {
