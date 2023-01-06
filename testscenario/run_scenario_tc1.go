@@ -3,6 +3,7 @@ package testscenario
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/omec-project/gnbsim/factory"
 	"github.com/openairinterface/ngap-tester/simgnb"
@@ -124,6 +125,19 @@ func (test *TestScenario) runScenarioTC1Ue(simUe *simuectx.SimUe, imsiStr string
 		test.Log.Errorln("runScenarioTC1Ue ended with error: ", err)
 		return err
 	}
+
+	// basic burst of packets
+	for i := 0; i < 3; i++ {
+		err = simue.PduSessionGenerateULTraffic(simUe)
+		if err != nil {
+			test.Log.Errorln("runScenarioTC1Ue ended with error: ", err)
+			return err
+		}
+		time.Sleep(1 * time.Millisecond)
+	}
+
+	// We can wait some time before ending session
+	time.Sleep(1 * time.Second)
 
 	_, err = simue.PerformDeregisterProcedureUEOriginatingDeregistration(simUe)
 

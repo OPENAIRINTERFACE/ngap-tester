@@ -10,6 +10,8 @@ import (
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/gnodeb"
 	realue_nas "github.com/omec-project/gnbsim/realue/nas"
+	"github.com/omec-project/gnbsim/util/ngapTestpacket"
+	"github.com/omec-project/gnbsim/util/test"
 	"github.com/omec-project/nas"
 	"github.com/omec-project/nas/nasMessage"
 	"github.com/omec-project/nas/nasTestpacket"
@@ -94,5 +96,41 @@ func SendPduSessionEstablishmentRequest(simUe *simuectx.SimUe) error {
 	}
 	msg := FormN2Message(common.N2_SEND_SDU_EVENT, sendMsg)
 	SendToGnbUe(simUe, msg)
+	return nil
+}
+
+func SendPduSessionResourceSetupResponse(simUe *simuectx.SimUe, intfcMsg common.InterfaceMessage) error {
+
+	msg := intfcMsg.(*common.UuMessage)
+	var pduSessions []*ngapTestpacket.PduSession
+	for _, item := range msg.DBParams {
+		pduSess := item.PduSess
+		pduSessions = append(pduSessions, pduSess)
+	}
+	var ngapPdu []byte
+	var err error
+
+	if msg.TriggeringEvent == common.PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT {
+		ngapPdu, err = test.GetPDUSessionResourceSetupResponse(pduSessions,
+			simUe.GnbCpUe.AmfUeNgapId, simUe.GnbCpUe.GnbUeNgapId, simUe.GnbCpUe.Gnb.GnbN3Ip)
+		if err != nil {
+			simUe.Log.Errorln("Failed to create PDU Session Resource Setup Response:", err)
+			return err
+		}
+	} else if msg.TriggeringEvent == common.INITIAL_CTX_SETUP_REQUEST_EVENT {
+		ngapPdu, err = test.GetInitialContextSetupResponseForServiceRequest(pduSessions,
+			simUe.GnbCpUe.AmfUeNgapId, simUe.GnbCpUe.GnbUeNgapId, simUe.GnbCpUe.Gnb.GnbN3Ip)
+		if err != nil {
+			simUe.Log.Errorln("Failed to create Initial Context Setup Response:", err)
+			return err
+		}
+	}
+
+	err = simUe.GnbCpUe.Gnb.CpTransport.SendToPeer(simUe.GnbCpUe.Amf, ngapPdu)
+	if err != nil {
+		simUe.Log.Errorln("SendToPeer failed:", err)
+		return err
+	}
+	simUe.Log.Traceln("Sent PDU Session Resource Setup Response Message to AMF")
 	return nil
 }
