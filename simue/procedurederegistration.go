@@ -7,7 +7,9 @@ import (
 	simuectx "github.com/openairinterface/ngap-tester/simue/context"
 )
 
-func PerformDeregisterProcedureUEOriginatingDeregistration(simUe *simuectx.SimUe) (common.InterfaceMessage, error) {
+func PerformDeregisterProcedureUEOriginatingDeregistration(
+	simUe *simuectx.SimUe,
+) (common.InterfaceMessage, error) {
 	var err error
 	simUe.Log.Traceln("PerformDeregisterProcedureUEOriginatingDeregistration")
 	//-------------------

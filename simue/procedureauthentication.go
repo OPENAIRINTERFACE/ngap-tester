@@ -9,11 +9,16 @@ import (
 	simuectx "github.com/openairinterface/ngap-tester/simue/context"
 )
 
-func PerformAuthenticationProcedure(simUe *simuectx.SimUe, nasMsg *nas.Message) error {
+func PerformAuthenticationProcedure(
+	simUe *simuectx.SimUe,
+	nasMsg *nas.Message,
+) error {
 	simUe.Log.Traceln("PerformAuthenticationProcedure")
 	authReq := nasMsg.AuthenticationRequest
 
-	simUe.RealUe.NgKsi = nasConvert.SpareHalfOctetAndNgksiToModels(authReq.SpareHalfOctetAndNgksi)
+	simUe.RealUe.NgKsi = nasConvert.SpareHalfOctetAndNgksiToModels(
+		authReq.SpareHalfOctetAndNgksi,
+	)
 
 	rand := authReq.GetRANDValue()
 	autn := authReq.GetAUTN()
@@ -30,7 +35,11 @@ func PerformAuthenticationProcedure(simUe *simuectx.SimUe, nasMsg *nas.Message) 
 	// Now generate NAS Authentication Response
 	nasPdu := nasTestpacket.GetAuthenticationResponse(resStat, "")
 
-	sendMsg, err := gnodeb.GetUplinkNASTransport(simUe.GnB, simUe.GnbCpUe, nasPdu)
+	sendMsg, err := gnodeb.GetUplinkNASTransport(
+		simUe.GnB,
+		simUe.GnbCpUe,
+		nasPdu,
+	)
 	if err != nil {
 		return err
 	}

@@ -84,9 +84,17 @@ func NewSimUe(supi string, ueModel string, gnb *gnbctx.GNodeB) *SimUe {
 		Buffer: ueProfile.Nas.SecurityCapabilities.ToBytes(),
 	}
 
-	simue.RealUe = realuectx.NewRealUe(supi, ueSecurityCapability,
-		simue.ReadChan, ueProfile.Plmn, ueProfile.Key, ueProfile.Opc, ueProfile.Nas.SeqNum,
-		ueProfile.Nas.Dnn, ueProfile.Nas.SNssai)
+	simue.RealUe = realuectx.NewRealUe(
+		supi,
+		ueSecurityCapability,
+		simue.ReadChan,
+		ueProfile.Plmn,
+		ueProfile.Key,
+		ueProfile.Opc,
+		ueProfile.Nas.SeqNum,
+		ueProfile.Nas.Dnn,
+		ueProfile.Nas.SNssai,
+	)
 
 	simue.Log = logger.SimUeLog.WithField(logger.FieldSupi, supi)
 
@@ -103,7 +111,9 @@ func GetSimUe(supi string) *SimUe {
 	return simue
 }
 
-func (ue *SimUe) RcvTimedMilliSecondEvent(timeOutMilliSeconds int) (common.InterfaceMessage, bool) {
+func (ue *SimUe) RcvTimedMilliSecondEvent(
+	timeOutMilliSeconds int,
+) (common.InterfaceMessage, bool) {
 	select {
 	case msg, ok := <-ue.ReadChan:
 		ue.Log.Traceln("Received event ", msg.GetEventType())
@@ -114,7 +124,9 @@ func (ue *SimUe) RcvTimedMilliSecondEvent(timeOutMilliSeconds int) (common.Inter
 	}
 }
 
-func (ue *SimUe) RcvTimedSecondEvent(timeOutSeconds int) (common.InterfaceMessage, bool) {
+func (ue *SimUe) RcvTimedSecondEvent(
+	timeOutSeconds int,
+) (common.InterfaceMessage, bool) {
 	select {
 	case msg, ok := <-ue.ReadChan:
 		ue.Log.Traceln("Received event ", msg.GetEventType())

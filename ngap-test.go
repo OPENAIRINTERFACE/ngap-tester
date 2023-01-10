@@ -78,7 +78,10 @@ func run_tests(c *cli.Context) error {
 
 	cfg := c.String("cfg")
 	if cfg == "" {
-		log.Printf("No configuration file provided. Using default configuration file: %v", factory.GNBSIM_DEFAULT_CONFIG_PATH)
+		log.Printf(
+			"No configuration file provided. Using default configuration file: %v",
+			factory.GNBSIM_DEFAULT_CONFIG_PATH,
+		)
 		log.Printf("Application Usage: %v", c.App.Usage)
 		cfg = factory.GNBSIM_DEFAULT_CONFIG_PATH
 	}

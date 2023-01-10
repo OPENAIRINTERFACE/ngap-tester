@@ -96,7 +96,8 @@ func CreateTestSuite(c *cli.Context) []TestScenario {
 	testsList := ListOfTestFromFile(testFile)
 
 	testTestName := "TC1"
-	if run_all || run_random || testName == testTestName || CheckIfTestIsInList(testTestName, testsList) {
+	if run_all || run_random || testName == testTestName ||
+		CheckIfTestIsInList(testTestName, testsList) {
 		scenario := TestScenario{
 			Id:          testTestName,
 			Description: "UE Initiated Registration Procedures - SUCIas id (UE and AMF Interactions- NAS) - Single gNB",
@@ -104,12 +105,16 @@ func CreateTestSuite(c *cli.Context) []TestScenario {
 			Action:      runScenarioTC1,
 			ReadChan:    make(chan common.InterfaceMessage, 9),
 			SimUe:       make(map[string]*simuectx.SimUe),
-			Log:         logger.ScenarioLog.WithField(logger.FieldScenario, testTestName),
+			Log: logger.ScenarioLog.WithField(
+				logger.FieldScenario,
+				testTestName,
+			),
 		}
 		testSuite = append(testSuite, scenario)
 	}
 	testTestName = "TC1a"
-	if run_all || run_random || testName == testTestName || CheckIfTestIsInList(testTestName, testsList) {
+	if run_all || run_random || testName == testTestName ||
+		CheckIfTestIsInList(testTestName, testsList) {
 		scenario := TestScenario{
 			Id:          testTestName,
 			Description: "Loop SUCI Registration with Single UE",
@@ -117,21 +122,29 @@ func CreateTestSuite(c *cli.Context) []TestScenario {
 			Action:      runScenarioTC1a,
 			ReadChan:    make(chan common.InterfaceMessage, 9),
 			SimUe:       make(map[string]*simuectx.SimUe),
-			Log:         logger.ScenarioLog.WithField(logger.FieldScenario, testTestName),
+			Log: logger.ScenarioLog.WithField(
+				logger.FieldScenario,
+				testTestName,
+			),
 		}
 		testSuite = append(testSuite, scenario)
 	}
 	// Shuffle randomly the test-suite
 	if run_random {
 		rand.Seed(time.Now().UnixNano())
-		rand.Shuffle(len(testSuite), func(i, j int) { testSuite[i], testSuite[j] = testSuite[j], testSuite[i] })
+		rand.Shuffle(
+			len(testSuite),
+			func(i, j int) { testSuite[i], testSuite[j] = testSuite[j], testSuite[i] },
+		)
 	}
 	return testSuite
 }
 
 func DisplayTestsuite(ts []TestScenario) {
 	log.Print("Scenario\t: Description")
-	log.Print("------------:-------------------------------------------------------")
+	log.Print(
+		"------------:-------------------------------------------------------",
+	)
 	for _, tst := range ts {
 		log.Printf("* %s\t: %s", tst.Id, tst.Description)
 	}
@@ -172,12 +185,18 @@ func RunTestsuite(ts []TestScenario) error {
 		}(&tst)
 
 		if factory.AppConfig.Configuration.ExecScenariosInParallel == false {
-			logger.AppLog.Traceln("Waiting for scenario ", tst.Id, " to continue")
+			logger.AppLog.Traceln(
+				"Waiting for scenario ",
+				tst.Id,
+				" to continue",
+			)
 			wg.Wait()
 		}
 	}
 	if factory.AppConfig.Configuration.ExecScenariosInParallel == true {
-		logger.AppLog.Traceln("Waiting for for all scenarios to finish processing...")
+		logger.AppLog.Traceln(
+			"Waiting for for all scenarios to finish processing...",
+		)
 		wg.Wait()
 	}
 
@@ -192,7 +211,9 @@ func RunTestsuite(ts []TestScenario) error {
 func DisplayTestsuiteResults(ts []TestScenario) {
 
 	log.Print("Scenario\t: Status\t: Description")
-	log.Print("------------:-------------------------------------------------------")
+	log.Print(
+		"------------:-------------------------------------------------------",
+	)
 	for _, tst := range ts {
 		switch tst.Status {
 		case SCENARIO_PASSED:
@@ -211,7 +232,10 @@ func DisplayTestsuiteResults(ts []TestScenario) {
 
 func InitializeAllGnbSims() ([]*simgnbctx.SimGnb, error) {
 	gnbs := factory.AppConfig.Configuration.Gnbs
-	simGnbs := make([]*simgnbctx.SimGnb, len(factory.AppConfig.Configuration.Gnbs))
+	simGnbs := make(
+		[]*simgnbctx.SimGnb,
+		len(factory.AppConfig.Configuration.Gnbs),
+	)
 	i := 0
 	for _, gnb := range gnbs {
 		simGnb := simgnbctx.NewSimGnb()
@@ -232,7 +256,11 @@ func InitializeAllGnbSims() ([]*simgnbctx.SimGnb, error) {
 }
 func (test *TestScenario) AllocateSimUes(gnb *context.GNodeB) error {
 
-	keysUeProf := make([]string, 0, len(factory.AppConfig.Configuration.UeProfiles))
+	keysUeProf := make(
+		[]string,
+		0,
+		len(factory.AppConfig.Configuration.UeProfiles),
+	)
 	for k := range factory.AppConfig.Configuration.UeProfiles {
 		test.Log.Traceln("key UE profile ", k)
 		keysUeProf = append(keysUeProf, k)
@@ -258,7 +286,11 @@ func (test *TestScenario) AllocateSimUes(gnb *context.GNodeB) error {
 func (test *TestScenario) ProvisionUes() error {
 	// Allocate objects separatly from launch of scenarios
 	// May help reduce delays between start of scenarios in seq or //
-	keysUeProf := make([]string, 0, len(factory.AppConfig.Configuration.UeProfiles))
+	keysUeProf := make(
+		[]string,
+		0,
+		len(factory.AppConfig.Configuration.UeProfiles),
+	)
 	for k := range factory.AppConfig.Configuration.UeProfiles {
 		keysUeProf = append(keysUeProf, k)
 	}
@@ -269,13 +301,22 @@ func (test *TestScenario) ProvisionUes() error {
 	for k := 0; k < len(keysUeProf); k = k + 1 {
 		ueProfile := factory.AppConfig.Configuration.UeProfiles[keysUeProf[k]]
 		if ueProfile.Provision.CreateSubscriber {
-			test.Log.Infoln("Provisioning ", ueProfile.NumUes, " subscribers for ", keysUeProf[k], " UE profile...")
+			test.Log.Infoln(
+				"Provisioning ",
+				ueProfile.NumUes,
+				" subscribers for ",
+				keysUeProf[k],
+				" UE profile...",
+			)
 			// Unmarshall JSON like string from config file into GO struct
 			jBlob := []byte(ueProfile.Provision.CreateJsonContent)
 			var subscriberProvision simuectx.SubscriberProvision
 			err := json.Unmarshal(jBlob, &subscriberProvision)
 			if err != nil {
-				test.Log.Errorln("ProvisionUes failed to handle JSON content:", err)
+				test.Log.Errorln(
+					"ProvisionUes failed to handle JSON content:",
+					err,
+				)
 				return err
 			}
 			startImsi, err := strconv.Atoi(ueProfile.StartImsi)
@@ -286,14 +327,31 @@ func (test *TestScenario) ProvisionUes() error {
 			}
 			for count, imsi := 1, startImsi; count <= ueProfile.NumUes; count, imsi = count+1, imsi+1 {
 				imsiStr := "imsi-" + strconv.Itoa(imsi)
-				err = test.ProvisionWithJson(imsiStr, ueProfile.Provision.CreateRestUrl, ueProfile.Provision.DeleteRestUrl, &subscriberProvision, client)
+				err = test.ProvisionWithJson(
+					imsiStr,
+					ueProfile.Provision.CreateRestUrl,
+					ueProfile.Provision.DeleteRestUrl,
+					&subscriberProvision,
+					client,
+				)
 				if err != nil {
-					test.Log.Errorln("Failed to provision subscriber ", imsiStr, ": ", err)
+					test.Log.Errorln(
+						"Failed to provision subscriber ",
+						imsiStr,
+						": ",
+						err,
+					)
 					return err
 				}
 				test.Log.Traceln("Provisioned subscriber ", imsiStr)
 			}
-			test.Log.Infoln("Provisioning ", ueProfile.NumUes, " subscribers for ", keysUeProf[k], " UE profile, done")
+			test.Log.Infoln(
+				"Provisioning ",
+				ueProfile.NumUes,
+				" subscribers for ",
+				keysUeProf[k],
+				" UE profile, done",
+			)
 
 		}
 	}
@@ -301,11 +359,27 @@ func (test *TestScenario) ProvisionUes() error {
 }
 
 // TODO may be moved at the rigth place when several UE profiles will be implemented
-func (test *TestScenario) ProvisionWithJson(imsiStr string, createRestUrl string, deleteRestUrl string, provision *simuectx.SubscriberProvision, httpClient *http.Client) error {
+func (test *TestScenario) ProvisionWithJson(
+	imsiStr string,
+	createRestUrl string,
+	deleteRestUrl string,
+	provision *simuectx.SubscriberProvision,
+	httpClient *http.Client,
+) error {
 
 	provision.Supi = imsiStr
-	createRestUrl = strings.Replace(createRestUrl, "SUBSCRIBER-SUPI", imsiStr, -1)
-	deleteRestUrl = strings.Replace(deleteRestUrl, "SUBSCRIBER-SUPI", imsiStr, -1)
+	createRestUrl = strings.Replace(
+		createRestUrl,
+		"SUBSCRIBER-SUPI",
+		imsiStr,
+		-1,
+	)
+	deleteRestUrl = strings.Replace(
+		deleteRestUrl,
+		"SUBSCRIBER-SUPI",
+		imsiStr,
+		-1,
+	)
 	payload, err := json.Marshal(provision)
 	if err != nil {
 		return err
@@ -322,13 +396,18 @@ func (test *TestScenario) ProvisionWithJson(imsiStr string, createRestUrl string
 		return err
 	}
 
-	if response.StatusCode != http.StatusNoContent && response.StatusCode != http.StatusAccepted {
+	if response.StatusCode != http.StatusNoContent &&
+		response.StatusCode != http.StatusAccepted {
 		err = fmt.Errorf("Non-Deleted HTTP status: %v", response.StatusCode)
 		return err
 	}
 	response.Body.Close()
 
-	request, err = http.NewRequest(http.MethodPut, createRestUrl, bytes.NewBuffer(payload))
+	request, err = http.NewRequest(
+		http.MethodPut,
+		createRestUrl,
+		bytes.NewBuffer(payload),
+	)
 	if err != nil {
 		return err
 	}
@@ -348,13 +427,20 @@ func (test *TestScenario) ProvisionWithJson(imsiStr string, createRestUrl string
 	return nil
 }
 
-func (scnr *TestScenario) InitImsi(gnb *context.GNodeB, imsiStr string, ueModel string) error {
+func (scnr *TestScenario) InitImsi(
+	gnb *context.GNodeB,
+	imsiStr string,
+	ueModel string,
+) error {
 	simUe := simue.InitUE(imsiStr, ueModel, gnb)
 	scnr.SimUe[imsiStr] = simUe
 	return nil
 }
 
-func (scnr *TestScenario) SendEventToSimUe(imsiStr string, event common.EventType) {
+func (scnr *TestScenario) SendEventToSimUe(
+	imsiStr string,
+	event common.EventType,
+) {
 	msg := &common.UeMessage{}
 	msg.Event = event
 	scnr.SimUe[imsiStr].ReadChan <- msg

@@ -43,7 +43,11 @@ func SendDeregisterRequest(simUe *simuectx.SimUe) error {
 		return err
 	}
 
-	sendMsg, err := gnodeb.GetUplinkNASTransport(simUe.GnB, simUe.GnbCpUe, nasPdu)
+	sendMsg, err := gnodeb.GetUplinkNASTransport(
+		simUe.GnB,
+		simUe.GnbCpUe,
+		nasPdu,
+	)
 	if err != nil {
 		return err
 	}
@@ -54,7 +58,10 @@ func SendDeregisterRequest(simUe *simuectx.SimUe) error {
 
 func SendInitialContextSetupResponse(simUe *simuectx.SimUe) error {
 	var err error
-	sendMsg, err := gnodeb.GetInitialContextSetupResponse(simUe.GnB, simUe.GnbCpUe)
+	sendMsg, err := gnodeb.GetInitialContextSetupResponse(
+		simUe.GnB,
+		simUe.GnbCpUe,
+	)
 	if err != nil {
 		return err
 	}
@@ -67,10 +74,17 @@ func SendRegistrationComplete(simUe *simuectx.SimUe) error {
 	var err error
 	nasPdu, err := realue_nas.GetRegistrationComplete(simUe.RealUe)
 	if err != nil {
-		simUe.Log.Errorln("Failed to encode NAS-Registration_Complete NAS Message due to", err)
+		simUe.Log.Errorln(
+			"Failed to encode NAS-Registration_Complete NAS Message due to",
+			err,
+		)
 		return err
 	}
-	sendMsg, err := gnodeb.GetUplinkNASTransport(simUe.GnB, simUe.GnbCpUe, nasPdu)
+	sendMsg, err := gnodeb.GetUplinkNASTransport(
+		simUe.GnB,
+		simUe.GnbCpUe,
+		nasPdu,
+	)
 	if err != nil {
 		return err
 	}
@@ -81,16 +95,27 @@ func SendRegistrationComplete(simUe *simuectx.SimUe) error {
 
 func SendPduSessionEstablishmentRequest(simUe *simuectx.SimUe) error {
 
-	nasPdu := nasTestpacket.GetUlNasTransport_PduSessionEstablishmentRequest(10,
-		nasMessage.ULNASTransportRequestTypeInitialRequest, simUe.RealUe.Dnn, simUe.RealUe.SNssai)
+	nasPdu := nasTestpacket.GetUlNasTransport_PduSessionEstablishmentRequest(
+		10,
+		nasMessage.ULNASTransportRequestTypeInitialRequest,
+		simUe.RealUe.Dnn,
+		simUe.RealUe.SNssai,
+	)
 
 	nasPdu, err := realue_nas.EncodeNasPduWithSecurity(simUe.RealUe, nasPdu,
 		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true)
 	if err != nil {
-		fmt.Println("Failed to encrypt PDU Session Establishment Request Message", err)
+		fmt.Println(
+			"Failed to encrypt PDU Session Establishment Request Message",
+			err,
+		)
 		return err
 	}
-	sendMsg, err := gnodeb.GetUplinkNASTransport(simUe.GnB, simUe.GnbCpUe, nasPdu)
+	sendMsg, err := gnodeb.GetUplinkNASTransport(
+		simUe.GnB,
+		simUe.GnbCpUe,
+		nasPdu,
+	)
 	if err != nil {
 		return err
 	}
@@ -99,7 +124,10 @@ func SendPduSessionEstablishmentRequest(simUe *simuectx.SimUe) error {
 	return nil
 }
 
-func SendPduSessionResourceSetupResponse(simUe *simuectx.SimUe, intfcMsg common.InterfaceMessage) error {
+func SendPduSessionResourceSetupResponse(
+	simUe *simuectx.SimUe,
+	intfcMsg common.InterfaceMessage,
+) error {
 
 	msg := intfcMsg.(*common.UuMessage)
 	var pduSessions []*ngapTestpacket.PduSession
@@ -111,10 +139,17 @@ func SendPduSessionResourceSetupResponse(simUe *simuectx.SimUe, intfcMsg common.
 	var err error
 
 	if msg.TriggeringEvent == common.PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT {
-		ngapPdu, err = test.GetPDUSessionResourceSetupResponse(pduSessions,
-			simUe.GnbCpUe.AmfUeNgapId, simUe.GnbCpUe.GnbUeNgapId, simUe.GnbCpUe.Gnb.GnbN3Ip)
+		ngapPdu, err = test.GetPDUSessionResourceSetupResponse(
+			pduSessions,
+			simUe.GnbCpUe.AmfUeNgapId,
+			simUe.GnbCpUe.GnbUeNgapId,
+			simUe.GnbCpUe.Gnb.GnbN3Ip,
+		)
 		if err != nil {
-			simUe.Log.Errorln("Failed to create PDU Session Resource Setup Response:", err)
+			simUe.Log.Errorln(
+				"Failed to create PDU Session Resource Setup Response:",
+				err,
+			)
 			return err
 		}
 	} else if msg.TriggeringEvent == common.INITIAL_CTX_SETUP_REQUEST_EVENT {

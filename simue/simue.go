@@ -16,7 +16,11 @@ import (
 	simuectx "github.com/openairinterface/ngap-tester/simue/context"
 )
 
-func InitUE(imsiStr string, ueModel string, gnb *gnbctx.GNodeB) *simuectx.SimUe {
+func InitUE(
+	imsiStr string,
+	ueModel string,
+	gnb *gnbctx.GNodeB,
+) *simuectx.SimUe {
 	simUe := simuectx.NewSimUe(imsiStr, ueModel, gnb)
 	Init(simUe) // Initialize simUE, realUE & wait for events
 	return simUe
@@ -42,10 +46,17 @@ func ConnectToGnb(simUe *simuectx.SimUe) error {
 
 	var err error
 	gNb := simUe.GnB
-	simUe.WriteGnbUeChan, simUe.GnbCpUe, err = gnodeb.RequestConnection(gNb, &uemsg)
+	simUe.WriteGnbUeChan, simUe.GnbCpUe, err = gnodeb.RequestConnection(
+		gNb,
+		&uemsg,
+	)
 	if err != nil {
-		simUe.Log.Infof("ERROR -- connecting to gNodeB, Name:%v, IP:%v, Port:%v", gNb.GnbName,
-			gNb.GnbN2Ip, gNb.GnbN2Port)
+		simUe.Log.Infof(
+			"ERROR -- connecting to gNodeB, Name:%v, IP:%v, Port:%v",
+			gNb.GnbName,
+			gNb.GnbN2Ip,
+			gNb.GnbN2Port,
+		)
 		return err
 	}
 
@@ -59,26 +70,44 @@ func SendToGnbUe(simUe *simuectx.SimUe, msg common.InterfaceMessage) {
 	simUe.WriteGnbUeChan <- msg
 }
 
-func FormN2Message(event common.EventType, n2Pdu []byte) *common.N2EncodedMessage {
+func FormN2Message(
+	event common.EventType,
+	n2Pdu []byte,
+) *common.N2EncodedMessage {
 	msg := &common.N2EncodedMessage{}
 	msg.Event = event
 	msg.N2Pdus = n2Pdu
 	return msg
 }
 
-func ExpectReceiveN1N2(simUe *simuectx.SimUe, ngapProcedureCode int64, nasMsgType uint8, timeOutSeconds int) (n1N2MsgResp *common.N1N2Message, n1DecodedMsg *nas.Message, err error) {
+func ExpectReceiveN1N2(
+	simUe *simuectx.SimUe,
+	ngapProcedureCode int64,
+	nasMsgType uint8,
+	timeOutSeconds int,
+) (n1N2MsgResp *common.N1N2Message, n1DecodedMsg *nas.Message, err error) {
 	msgResp, ok := simUe.RcvTimedSecondEvent(timeOutSeconds)
 	if !ok {
-		err = fmt.Errorf("expected NGAP %v / NAS %v: coming from AMF timed-out", err)
+		err = fmt.Errorf(
+			"expected NGAP %v / NAS %v: coming from AMF timed-out",
+			err,
+		)
 		return
 	}
 	if msgResp.GetEventType() != common.N1_N2_RECV_SDU_EVENT {
-		err = fmt.Errorf("unexpected event %v, wanted: N1_N2_RECV_SDU_EVENT", msgResp.GetEventType().String())
+		err = fmt.Errorf(
+			"unexpected event %v, wanted: N1_N2_RECV_SDU_EVENT",
+			msgResp.GetEventType().String(),
+		)
 		return
 	}
 	n1N2MsgResp = msgResp.(*common.N1N2Message)
 	if n1N2MsgResp.NgapProcedureCode != ngapProcedureCode {
-		err = fmt.Errorf("unexpected NGAP procedure code %v, wanted: %v", n1N2MsgResp.NgapProcedureCode, ngapProcedureCode)
+		err = fmt.Errorf(
+			"unexpected NGAP procedure code %v, wanted: %v",
+			n1N2MsgResp.NgapProcedureCode,
+			ngapProcedureCode,
+		)
 		return
 	}
 	if nasMsgType != 0 {
@@ -86,7 +115,11 @@ func ExpectReceiveN1N2(simUe *simuectx.SimUe, ngapProcedureCode int64, nasMsgTyp
 			err = fmt.Errorf("NAS message (type %v) missing", nasMsgType)
 			return
 		}
-		n1DecodedMsg, err = realue_nas.NASDecode(simUe.RealUe, nas.GetSecurityHeaderType(n1N2MsgResp.NasPdu.Value), n1N2MsgResp.NasPdu.Value)
+		n1DecodedMsg, err = realue_nas.NASDecode(
+			simUe.RealUe,
+			nas.GetSecurityHeaderType(n1N2MsgResp.NasPdu.Value),
+			n1N2MsgResp.NasPdu.Value,
+		)
 		msgType := n1DecodedMsg.GmmHeader.GetMessageType()
 		if msgType != nasMsgType {
 			if msgType == nas.MsgTypeDLNASTransport {
@@ -101,7 +134,11 @@ func ExpectReceiveN1N2(simUe *simuectx.SimUe, ngapProcedureCode int64, nasMsgTyp
 					}
 					msgType = m.GsmHeader.GetMessageType()
 					if msgType != nasMsgType {
-						err = fmt.Errorf("NAS message (type %v) unexpected (type %v)", msgType, nasMsgType)
+						err = fmt.Errorf(
+							"NAS message (type %v) unexpected (type %v)",
+							msgType,
+							nasMsgType,
+						)
 						return
 					}
 					// remove wrapper of container

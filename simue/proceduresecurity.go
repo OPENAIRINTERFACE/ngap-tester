@@ -14,7 +14,10 @@ import (
 	simuectx "github.com/openairinterface/ngap-tester/simue/context"
 )
 
-func PerformSecurityProcedure(simUe *simuectx.SimUe, nasMsg *nas.Message) (err error) {
+func PerformSecurityProcedure(
+	simUe *simuectx.SimUe,
+	nasMsg *nas.Message,
+) (err error) {
 	simUe.Log.Traceln("PerformSecurityProcedure")
 	//TODO: Process corresponding Security Mode Command first
 
@@ -36,22 +39,35 @@ func PerformSecurityProcedure(simUe *simuectx.SimUe, nasMsg *nas.Message) (err e
 	networkSlicingIndication.SetNSSCI(0)
 
 	registrationRequestWith5GMM := nasTestpacket.GetRegistrationRequest(
-		nasMessage.RegistrationType5GSInitialRegistration, mobileId5GS, requestedNSSAI,
-		networkSlicingIndication, simUe.RealUe.GetUESecurityCapability(),
-		simUe.RealUe.Get5GMMCapability(), nil, nil)
+		nasMessage.RegistrationType5GSInitialRegistration,
+		mobileId5GS,
+		requestedNSSAI,
+		networkSlicingIndication,
+		simUe.RealUe.GetUESecurityCapability(),
+		simUe.RealUe.Get5GMMCapability(),
+		nil,
+		nil,
+	)
 
 	simUe.Log.Traceln("Generating Security Mode Complete Message")
 	nasPdu := nasTestpacket.GetSecurityModeComplete(registrationRequestWith5GMM)
 
-	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(simUe.RealUe, nasPdu,
+	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(
+		simUe.RealUe,
+		nasPdu,
 		nas.SecurityHeaderTypeIntegrityProtectedAndCipheredWithNew5gNasSecurityContext,
-		true)
+		true,
+	)
 	if err != nil {
 		simUe.Log.Errorln("EncodeNasPduWithSecurity() returned:", err)
 		return fmt.Errorf("failed to encrypt security mode complete message")
 	}
 
-	sendMsg, err := gnodeb.GetUplinkNASTransport(simUe.GnB, simUe.GnbCpUe, nasPdu)
+	sendMsg, err := gnodeb.GetUplinkNASTransport(
+		simUe.GnB,
+		simUe.GnbCpUe,
+		nasPdu,
+	)
 	if err != nil {
 		return err
 	}

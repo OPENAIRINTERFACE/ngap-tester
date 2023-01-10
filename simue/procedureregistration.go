@@ -8,7 +8,9 @@ import (
 	simuectx "github.com/openairinterface/ngap-tester/simue/context"
 )
 
-func PerformRegisterProcedure(simUe *simuectx.SimUe) (common.InterfaceMessage, error) {
+func PerformRegisterProcedure(
+	simUe *simuectx.SimUe,
+) (common.InterfaceMessage, error) {
 	var err error
 	simUe.Log.Traceln("PerformRegisterProcedure")
 	//-------------------
@@ -69,7 +71,10 @@ func PerformRegisterProcedure(simUe *simuectx.SimUe) (common.InterfaceMessage, e
 	}
 
 	// Process IEs
-	err = realue.HandleRegistrationAccept(simUe.RealUe, n1DecodedMsg.RegistrationAccept)
+	err = realue.HandleRegistrationAccept(
+		simUe.RealUe,
+		n1DecodedMsg.RegistrationAccept,
+	)
 	if err != nil {
 		return nil, err
 	}

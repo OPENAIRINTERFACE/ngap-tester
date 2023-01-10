@@ -107,7 +107,10 @@ func runScenarioTC1(test *TestScenario) error {
 	return nil
 }
 
-func (test *TestScenario) runScenarioTC1Ue(simUe *simuectx.SimUe, imsiStr string) error {
+func (test *TestScenario) runScenarioTC1Ue(
+	simUe *simuectx.SimUe,
+	imsiStr string,
+) error {
 	// ===================================================================
 	// SCENARIO concerning UEs starts here
 	// ===================================================================
