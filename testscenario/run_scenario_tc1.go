@@ -2,6 +2,7 @@ package testscenario
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -143,6 +144,18 @@ func (test *TestScenario) runScenarioTC1Ue(
 	time.Sleep(1 * time.Second)
 
 	_, err = simue.PerformDeregisterProcedureUEOriginatingDeregistration(simUe)
+	if err != nil {
+		test.Log.Errorln("runScenarioTC1Ue ended with error: ", err)
+		return err
+	}
+
+	// Assert no more event from CN
+	_, _, err = simue.ExpectReceiveN1N2(simUe, 0, 0, 3)
+	if err != nil {
+		if strings.HasSuffix(err.Error(), "timed-out") {
+			err = nil
+		}
+	}
 
 	if err != nil {
 		test.Log.Errorln("runScenarioTC1Ue ended with error: ", err)
